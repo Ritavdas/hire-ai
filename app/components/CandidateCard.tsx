@@ -10,6 +10,7 @@ type CandidateCardProps = {
 };
 
 export default function CandidateCard({
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	id, // TODO: Will be used for linking to candidate details
 	name,
 	location,
