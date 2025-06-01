@@ -1,36 +1,62 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# HireAI - CV Search & Screening Tool
+
+HireAI is an AI-powered CV search and screening tool designed for recruiters. It allows recruiters to upload a folder of resumes, index them in a database, and perform instant, fast keyword-based searches.
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- Node.js 18+ and npm
+- Supabase account with a project set up
+- PostgreSQL database (provided by Supabase)
+
+### Environment Setup
+
+1. Clone this repository
+2. Create a `.env.local` file in the root directory with the following variables:
+
+```
+NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+SUPABASE_DATABASE_URL=postgresql://username:password@host:5432/database
+OPENAI_API_KEY=your-openai-api-key  # Optional for CV summarization
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Installation
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+# Install dependencies
+npm install
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# Set up the database
+npm run db:setup
 
-## Learn More
+# Create a test resume (optional)
+npm run create:test-resume
 
-To learn more about Next.js, take a look at the following resources:
+# Upload resumes to the database
+npm run upload:resumes
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Start the development server
+npm run dev
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Resume Upload
 
-## Deploy on Vercel
+1. Place your resume files (PDF, DOCX, DOC, or TXT) in the `resumes/` directory
+2. Run `npm run upload:resumes` to process and upload them to the database
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Features
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Upload and parse 100+ resumes
+- Ultra-fast full-text search
+- View candidate details and matching text snippets
+- Optional AI-powered resume summarization
+
+## Tech Stack
+
+- Next.js 15 with App Router
+- Drizzle ORM with Supabase PostgreSQL
+- Tailwind CSS for styling
+- pdf-parse and textract for document parsing
+- OpenAI API for resume summarization (optional)
