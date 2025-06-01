@@ -1,4 +1,5 @@
 import React from "react";
+import DOMPurify from "dompurify";
 
 type CandidateCardProps = {
 	id: string;
@@ -9,7 +10,7 @@ type CandidateCardProps = {
 };
 
 export default function CandidateCard({
-	id,
+	id, // TODO: Will be used for linking to candidate details
 	name,
 	location,
 	snippet,
@@ -36,7 +37,7 @@ export default function CandidateCard({
 				</h4>
 				<div
 					className="text-sm text-gray-800 bg-yellow-50 p-2 rounded"
-					dangerouslySetInnerHTML={{ __html: snippet }}
+					dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(snippet) }}
 				/>
 			</div>
 		</div>

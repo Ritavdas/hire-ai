@@ -17,6 +17,8 @@
 		"create:test-resume": "node ./scripts/createTestResume.js"
 	},
 	"dependencies": {
+		"@types/dompurify": "^3.0.5",
+		"dompurify": "^3.2.6",
 		"dotenv": "^16.5.0",
 		"drizzle-orm": "^0.29.0",
 		"next": "15.3.3",
