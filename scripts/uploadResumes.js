@@ -3,33 +3,91 @@ import path from "path";
 import pdf from "pdf-parse/lib/pdf-parse.js";
 import textract from "textract";
 import { promisify } from "util";
-import { resumes } from "../db/schema.js";
-import { db } from "../db/client.js";
-import { eq } from "drizzle-orm";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
+import { pgTable, uuid, text } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
+import { customType } from "drizzle-orm/pg-core";
+import dotenv from "dotenv";
 
 // Convert textract.fromFileWithPath to Promise-based
 const extractFromFile = promisify(textract.fromFileWithPath);
+
+// Load environment variables
+dotenv.config();
+
+// Define the schema inline (copied from db/schema.ts)
+const tsvector = customType({
+	dataType() {
+		return "tsvector";
+	},
+});
+
+const resumes = pgTable("resumes", {
+	id: uuid("id")
+		.default(sql`uuid_generate_v4()`)
+		.notNull()
+		.primaryKey(),
+	name: text("name").notNull(),
+	location: text("location"),
+	rawText: text("raw_text").notNull(),
+	tsv: tsvector("tsv"),
+});
+
+// Check if the database URL is available
+if (!process.env.SUPABASE_DATABASE_URL) {
+	console.error(
+		"Error: SUPABASE_DATABASE_URL environment variable is not set"
+	);
+	process.exit(1);
+}
+
+// Log connection attempt
+console.log("Attempting to connect to database...");
+
+// Create the database connection
+const pool = new Pool({
+	connectionString: process.env.SUPABASE_DATABASE_URL,
+	ssl: { rejectUnauthorized: false },
+});
+
+// Test the connection before proceeding
+pool
+	.connect()
+	.then(() => console.log("Database connection successful"))
+	.catch((err) => {
+		console.error("Database connection failed:", err);
+		process.exit(1);
+	});
+
+const db = drizzle(pool, { schema: { resumes } });
+
 /**
  * Extract text from a file based on its extension
  */
 async function extractTextFromFile(filePath) {
-	// Check file size (limit to 50MB)
-	const stats = fs.statSync(filePath);
-	if (stats.size > 50 * 1024 * 1024) {
-		throw new Error(`File too large: ${stats.size} bytes (max 50MB)`);
-	}
-
 	const extension = path.extname(filePath).toLowerCase();
 
 	if (extension === ".pdf") {
-		const dataBuffer = await fs.promises.readFile(filePath);
-		const pdfData = await pdf(dataBuffer);
-		return pdfData.text;
+		try {
+			const dataBuffer = fs.readFileSync(filePath);
+			console.log(
+				`Read file ${filePath}, buffer size: ${dataBuffer.length} bytes`
+			);
+
+			// Use pdf-parse correctly
+			const pdfData = await pdf(dataBuffer);
+			return pdfData.text;
+		} catch (err) {
+			console.error(`Error parsing PDF ${filePath}:`, err);
+			throw err;
+		}
 	} else if ([".docx", ".doc"].includes(extension)) {
 		const text = await extractFromFile(filePath);
 		return text;
 	} else if (extension === ".txt") {
-		return await fs.promises.readFile(filePath, "utf8");
+		// Simply read the text file
+		return fs.readFileSync(filePath, "utf8");
 	} else {
 		throw new Error(`Unsupported file format: ${extension}`);
 	}
@@ -57,28 +115,16 @@ async function main() {
 			const rawText = await extractTextFromFile(fullPath);
 
 			const nameOnly = path.basename(filename, path.extname(filename));
-
-			// Check if resume already exists
-			const existing = await db
-				.select()
-				.from(resumes)
-				.where(eq(resumes.name, nameOnly))
-				.limit(1);
-			if (existing.length > 0) {
-				console.log(`Skipping ${filename} - already exists`);
-				continue;
-			}
-
 			await db.insert(resumes).values({
 				name: nameOnly,
-				location: null, // Use null instead of empty string
+				location: "",
 				rawText,
 			});
 			console.log(`Inserted ${filename}`);
 		} catch (err) {
 			console.error(
 				`Failed to process ${filename}:`,
-				err instanceof Error ? err.message : String(err)
+				err instanceof Error ? err.stack || err.message : String(err)
 			);
 		}
 	}
