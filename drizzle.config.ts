@@ -7,6 +7,12 @@ export default {
 	out: "./drizzle",
 	driver: "pg",
 	dbCredentials: {
-		connectionString: process.env.SUPABASE_DATABASE_URL || "",
+		connectionString:
+			process.env.SUPABASE_DATABASE_URL ||
+			(() => {
+				throw new Error(
+					"SUPABASE_DATABASE_URL environment variable is required"
+				);
+			})(),
 	},
 } satisfies Config;

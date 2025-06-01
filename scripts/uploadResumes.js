@@ -3,57 +3,33 @@ import path from "path";
 import pdf from "pdf-parse/lib/pdf-parse.js";
 import textract from "textract";
 import { promisify } from "util";
-import { drizzle } from "drizzle-orm/node-postgres";
-import { Pool } from "pg";
-import { pgTable, uuid, text } from "drizzle-orm/pg-core";
-import { sql } from "drizzle-orm";
-import { customType } from "drizzle-orm/pg-core";
+import { resumes } from "../db/schema.js";
+import { db } from "../db/client.js";
+import { eq } from "drizzle-orm";
 
 // Convert textract.fromFileWithPath to Promise-based
 const extractFromFile = promisify(textract.fromFileWithPath);
-
-// Define the schema inline (copied from db/schema.ts)
-const tsvector = customType({
-	dataType() {
-		return "tsvector";
-	},
-});
-
-const resumes = pgTable("resumes", {
-	id: uuid("id")
-		.default(sql`uuid_generate_v4()`)
-		.notNull()
-		.primaryKey(),
-	name: text("name").notNull(),
-	location: text("location"),
-	rawText: text("raw_text").notNull(),
-	tsv: tsvector("tsv"),
-});
-
-// Create the database connection (copied from db/client.ts)
-const pool = new Pool({
-	connectionString: process.env.SUPABASE_DATABASE_URL,
-	ssl: { rejectUnauthorized: false },
-});
-
-const db = drizzle(pool, { schema: { resumes } });
-
 /**
  * Extract text from a file based on its extension
  */
 async function extractTextFromFile(filePath) {
+	// Check file size (limit to 50MB)
+	const stats = fs.statSync(filePath);
+	if (stats.size > 50 * 1024 * 1024) {
+		throw new Error(`File too large: ${stats.size} bytes (max 50MB)`);
+	}
+
 	const extension = path.extname(filePath).toLowerCase();
 
 	if (extension === ".pdf") {
-		const dataBuffer = fs.readFileSync(filePath);
+		const dataBuffer = await fs.promises.readFile(filePath);
 		const pdfData = await pdf(dataBuffer);
 		return pdfData.text;
 	} else if ([".docx", ".doc"].includes(extension)) {
 		const text = await extractFromFile(filePath);
 		return text;
 	} else if (extension === ".txt") {
-		// Simply read the text file
-		return fs.readFileSync(filePath, "utf8");
+		return await fs.promises.readFile(filePath, "utf8");
 	} else {
 		throw new Error(`Unsupported file format: ${extension}`);
 	}
@@ -81,9 +57,21 @@ async function main() {
 			const rawText = await extractTextFromFile(fullPath);
 
 			const nameOnly = path.basename(filename, path.extname(filename));
+
+			// Check if resume already exists
+			const existing = await db
+				.select()
+				.from(resumes)
+				.where(eq(resumes.name, nameOnly))
+				.limit(1);
+			if (existing.length > 0) {
+				console.log(`Skipping ${filename} - already exists`);
+				continue;
+			}
+
 			await db.insert(resumes).values({
 				name: nameOnly,
-				location: "",
+				location: null, // Use null instead of empty string
 				rawText,
 			});
 			console.log(`Inserted ${filename}`);

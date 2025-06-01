@@ -361,11 +361,12 @@ No other tables are strictly necessary for the MVP. Additional tables (e.g., `in
   import { eq } from 'drizzle-orm';
   import { db } from '@/db/client';
   import { resumes } from '@/db/schema';
-  import { Configuration, OpenAIApi } from 'openai';
 
-  const openai = new OpenAIApi(
-    new Configuration({ apiKey: process.env.OPENAI_API_KEY })
-  );
+ import { OpenAI } from 'openai';
+
+ const openai = new OpenAI({
+   apiKey: process.env.OPENAI_API_KEY,
+ });
 
   export async function POST(request: Request) {
     const body = await request.json();
@@ -400,6 +401,7 @@ No other tables are strictly necessary for the MVP. Additional tables (e.g., `in
       return NextResponse.json({ error: 'OpenAI request failed: ' + err.message }, { status: 500 });
     }
   }
+
   ```
 
 * **Response** (JSON):

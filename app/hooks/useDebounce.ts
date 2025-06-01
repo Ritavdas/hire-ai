@@ -22,11 +22,17 @@ export function useDebouncedCallback<T extends (...args: unknown[]) => void>(
 ): T {
 	const callbackRef = useRef<T>(callback);
 	const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const delayRef = useRef<number>(delay);
 
 	// Update the callback ref whenever callback changes
 	useEffect(() => {
 		callbackRef.current = callback;
 	}, [callback]);
+
+	// Update the delay ref whenever delay changes
+	useEffect(() => {
+		delayRef.current = delay;
+	}, [delay]);
 
 	const debouncedCallback = useRef(((...args: Parameters<T>) => {
 		if (timeoutRef.current) {
@@ -35,7 +41,7 @@ export function useDebouncedCallback<T extends (...args: unknown[]) => void>(
 
 		timeoutRef.current = setTimeout(() => {
 			callbackRef.current(...args);
-		}, delay);
+		}, delayRef.current);
 	}) as T);
 
 	// Cleanup timeout on unmount
@@ -47,5 +53,5 @@ export function useDebouncedCallback<T extends (...args: unknown[]) => void>(
 		};
 	}, []);
 
-	return debouncedCallback.current;
+	return debouncedCallback.current!;
 }

@@ -12,7 +12,10 @@ async function runMigrations() {
 
 	const pool = new Pool({
 		connectionString: process.env.SUPABASE_DATABASE_URL,
-		ssl: { rejectUnauthorized: false },
+		ssl:
+			process.env.NODE_ENV === "production"
+				? { rejectUnauthorized: true }
+				: { rejectUnauthorized: false },
 	});
 
 	const db = drizzle(pool);

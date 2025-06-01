@@ -17,7 +17,10 @@ async function runCustomMigrations() {
 
 	const pool = new Pool({
 		connectionString: process.env.SUPABASE_DATABASE_URL,
-		ssl: { rejectUnauthorized: false },
+		ssl:
+			process.env.NODE_ENV === "production"
+				? { rejectUnauthorized: true }
+				: { rejectUnauthorized: false },
 	});
 
 	try {
@@ -35,5 +38,7 @@ async function runCustomMigrations() {
 		await pool.end();
 	}
 }
+
+runCustomMigrations();
 
 runCustomMigrations();

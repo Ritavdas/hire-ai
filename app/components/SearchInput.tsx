@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useDebounce } from "../hooks/useDebounce";
 
 interface SearchInputProps {
@@ -19,10 +19,13 @@ export default function SearchInput({
 	const [query, setQuery] = useState("");
 	const debouncedQuery = useDebounce(query, debounceMs);
 
+	// Memoize onSearch to prevent unnecessary effect re-runs
+	const stableOnSearch = useCallback(onSearch, [onSearch]);
+
 	// Call onSearch when debouncedQuery changes
 	useEffect(() => {
-		onSearch(debouncedQuery);
-	}, [debouncedQuery, onSearch]);
+		stableOnSearch(debouncedQuery);
+	}, [debouncedQuery, stableOnSearch]);
 
 	return (
 		<input
@@ -31,6 +34,9 @@ export default function SearchInput({
 			onChange={(e) => setQuery(e.target.value)}
 			placeholder={placeholder}
 			className={className}
+			aria-label="Search resumes"
+			autoComplete="off"
+			spellCheck="false"
 		/>
 	);
 }
