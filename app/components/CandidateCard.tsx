@@ -1,5 +1,6 @@
 import React from "react";
 import DOMPurify from "dompurify";
+import AISummary from "./AISummary";
 
 type CandidateCardProps = {
 	id: string;
@@ -10,8 +11,7 @@ type CandidateCardProps = {
 };
 
 export default function CandidateCard({
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	id, // TODO: Will be used for linking to candidate details
+	id,
 	name,
 	location,
 	snippet,
@@ -41,6 +41,8 @@ export default function CandidateCard({
 					dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(snippet) }}
 				/>
 			</div>
+
+			<AISummary resumeId={id} />
 		</div>
 	);
 }
