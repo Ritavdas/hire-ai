@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { StarIcon, EyeIcon, ChevronLeftIcon } from "./icons";
 
 type SummaryData = {
