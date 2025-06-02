@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import DOMPurify from "dompurify";
 import AISummary from "./AISummary";
 import PDFViewer from "./PDFViewer";
+import SimplePDFViewer from "./SimplePDFViewer";
+import PDFDebugger from "./PDFDebugger";
 
 type CandidateCardProps = {
 	id: string;
@@ -25,6 +27,7 @@ export default function CandidateCard({
 	searchTerm,
 }: CandidateCardProps) {
 	const [isPDFViewerOpen, setIsPDFViewerOpen] = useState(false);
+	const [useSimpleViewer, setUseSimpleViewer] = useState(false);
 	return (
 		<>
 			<div className="border rounded-lg p-4 mb-4 bg-white shadow-sm hover:shadow-md transition-shadow">
@@ -70,10 +73,11 @@ export default function CandidateCard({
 				</div>
 
 				{/* Action buttons */}
-				<div className="mt-4 flex gap-2">
+				<div className="mt-4 flex gap-2 flex-wrap">
 					<button
 						onClick={() => {
 							if (pdfUrl) {
+								setUseSimpleViewer(false);
 								setIsPDFViewerOpen(true);
 							} else {
 								alert(
@@ -90,20 +94,58 @@ export default function CandidateCard({
 						<span className="mr-1">📄</span>
 						{pdfUrl ? "View Resume" : "PDF Not Available"}
 					</button>
+
+					{pdfUrl && (
+						<>
+							<button
+								onClick={() => {
+									setUseSimpleViewer(true);
+									setIsPDFViewerOpen(true);
+								}}
+								className="text-sm text-green-600 hover:text-green-800 flex items-center"
+							>
+								<span className="mr-1">🔧</span> Simple Viewer
+							</button>
+							<a
+								href={pdfUrl}
+								target="_blank"
+								rel="noopener noreferrer"
+								className="text-sm text-purple-600 hover:text-purple-800 flex items-center"
+							>
+								<span className="mr-1">🔗</span> Open in Tab
+							</a>
+						</>
+					)}
 				</div>
 
 				<AISummary resumeId={id} />
+
+				{/* PDF Debugger - only show for resumes with PDF URLs in development */}
+				{pdfUrl && process.env.NODE_ENV === "development" && (
+					<PDFDebugger pdfUrl={pdfUrl} candidateName={name} />
+				)}
 			</div>
 
-			{/* PDF Viewer Modal */}
-			{pdfUrl && (
-				<PDFViewer
-					pdfUrl={pdfUrl}
-					candidateName={name}
-					isOpen={isPDFViewerOpen}
-					onClose={() => setIsPDFViewerOpen(false)}
-					searchTerm={searchTerm}
-				/>
+			{/* PDF Viewer Modals */}
+			{pdfUrl && isPDFViewerOpen && (
+				<>
+					{useSimpleViewer ? (
+						<SimplePDFViewer
+							pdfUrl={pdfUrl}
+							candidateName={name}
+							isOpen={isPDFViewerOpen}
+							onClose={() => setIsPDFViewerOpen(false)}
+						/>
+					) : (
+						<PDFViewer
+							pdfUrl={pdfUrl}
+							candidateName={name}
+							isOpen={isPDFViewerOpen}
+							onClose={() => setIsPDFViewerOpen(false)}
+							searchTerm={searchTerm}
+						/>
+					)}
+				</>
 			)}
 		</>
 	);

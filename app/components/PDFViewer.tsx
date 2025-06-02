@@ -2,10 +2,20 @@
 
 import React, { useState, useEffect } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
+import "react-pdf/dist/Page/AnnotationLayer.css";
+import "react-pdf/dist/Page/TextLayer.css";
 
-// Set up PDF.js worker
+// Set up PDF.js worker with better error handling
 if (typeof window !== "undefined") {
-	pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+	// Try multiple worker sources for better compatibility
+	const workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
+	pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
+
+	// Enable verbose logging for debugging
+	if (process.env.NODE_ENV === "development") {
+		console.log("PDF.js version:", pdfjs.version);
+		console.log("PDF.js worker source:", workerSrc);
+	}
 }
 
 type PDFViewerProps = {
@@ -31,6 +41,7 @@ export default function PDFViewer({
 	// Reset state when pdfUrl or isOpen changes
 	useEffect(() => {
 		if (isOpen) {
+			console.log("PDF Viewer opened with URL:", pdfUrl);
 			setPageNumber(1);
 			setLoading(true);
 			setError(null);
@@ -38,6 +49,7 @@ export default function PDFViewer({
 	}, [pdfUrl, isOpen]);
 
 	function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
+		console.log("PDF loaded successfully, pages:", numPages);
 		setNumPages(numPages);
 		setLoading(false);
 		setError(null);
@@ -45,7 +57,22 @@ export default function PDFViewer({
 
 	function onDocumentLoadError(error: Error) {
 		console.error("PDF load error:", error);
-		setError("Failed to load PDF. Please try again.");
+		console.error("PDF URL that failed:", pdfUrl);
+
+		// More specific error messages
+		let errorMessage = "Failed to load PDF. ";
+		if (error.message.includes("CORS")) {
+			errorMessage +=
+				"CORS error - PDF server doesn't allow cross-origin requests.";
+		} else if (error.message.includes("404")) {
+			errorMessage += "PDF file not found.";
+		} else if (error.message.includes("403")) {
+			errorMessage += "Access denied to PDF file.";
+		} else {
+			errorMessage += `Error: ${error.message}`;
+		}
+
+		setError(errorMessage);
 		setLoading(false);
 	}
 
@@ -111,13 +138,44 @@ export default function PDFViewer({
 						<div className="flex flex-col items-center">
 							<Document
 								file={pdfUrl}
+								options={{
+									httpHeaders: {
+										Accept: "application/pdf",
+									},
+									withCredentials: false,
+								}}
 								onLoadSuccess={onDocumentLoadSuccess}
 								onLoadError={onDocumentLoadError}
+								onLoadStart={() => console.log("PDF loading started")}
 								className="border border-gray-300"
 								loading={
 									<div className="flex items-center justify-center h-64">
 										<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
 										<span className="ml-2">Loading PDF...</span>
+									</div>
+								}
+								error={
+									<div className="flex items-center justify-center h-64">
+										<div className="text-red-600 text-center">
+											<p className="text-lg font-semibold">
+												Failed to load PDF
+											</p>
+											<p className="text-sm">
+												The PDF file could not be loaded.
+											</p>
+										</div>
+									</div>
+								}
+								noData={
+									<div className="flex items-center justify-center h-64">
+										<div className="text-gray-600 text-center">
+											<p className="text-lg font-semibold">
+												No PDF data
+											</p>
+											<p className="text-sm">
+												The PDF file appears to be empty.
+											</p>
+										</div>
 									</div>
 								}
 							>
@@ -130,10 +188,28 @@ export default function PDFViewer({
 									}
 									renderTextLayer={false}
 									renderAnnotationLayer={false}
+									onLoadSuccess={() =>
+										console.log(`Page ${pageNumber} loaded`)
+									}
+									onLoadError={(error) =>
+										console.error(
+											`Page ${pageNumber} load error:`,
+											error
+										)
+									}
 									loading={
 										<div className="flex items-center justify-center h-64">
 											<div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
 											<span className="ml-2">Loading page...</span>
+										</div>
+									}
+									error={
+										<div className="flex items-center justify-center h-64">
+											<div className="text-red-600 text-center">
+												<p className="text-sm">
+													Failed to load page {pageNumber}
+												</p>
+											</div>
 										</div>
 									}
 								/>
