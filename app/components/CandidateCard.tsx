@@ -4,6 +4,14 @@ import AISummary from "./AISummary";
 import PDFViewer from "./PDFViewer";
 import SimplePDFViewer from "./SimplePDFViewer";
 import PDFDebugger from "./PDFDebugger";
+import {
+	DocumentIcon,
+	EyeIcon,
+	ExternalLinkIcon,
+	LocationIcon,
+	UserIcon,
+	StarIcon,
+} from "./icons";
 
 type CandidateCardProps = {
 	id: string;
@@ -30,100 +38,136 @@ export default function CandidateCard({
 	const [useSimpleViewer, setUseSimpleViewer] = useState(false);
 	return (
 		<>
-			<div className="border rounded-lg p-4 mb-4 bg-white shadow-sm hover:shadow-md transition-shadow">
-				<div className="flex justify-between items-start mb-2">
-					<h3 className="text-lg font-semibold">{name}</h3>
-					{relevance && (
-						<span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded">
-							{relevance}% match
-						</span>
-					)}
+			<div className="card group hover:shadow-lg transition-all duration-300">
+				{/* Card Header */}
+				<div className="card-header">
+					<div className="flex items-start justify-between">
+						<div className="flex items-start space-x-4">
+							<div className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-md">
+								<UserIcon className="text-white" size={24} />
+							</div>
+							<div className="flex-1">
+								<h3 className="text-xl font-bold text-gray-900 mb-1">
+									{name}
+								</h3>
+								{location && (
+									<div className="flex items-center text-gray-600 text-sm">
+										<LocationIcon className="mr-1.5" size={16} />
+										{location}
+									</div>
+								)}
+							</div>
+						</div>
+						{relevance && (
+							<div className="flex items-center space-x-2">
+								<StarIcon className="text-yellow-500" size={16} />
+								<span className="badge badge-primary font-semibold">
+									{relevance}% match
+								</span>
+							</div>
+						)}
+					</div>
 				</div>
 
-				{location && (
-					<p className="text-gray-600 text-sm mb-2">
-						<span className="inline-block mr-1">📍</span> {location}
-					</p>
-				)}
-
-				{/* Show snippet for search results or preview for all resumes */}
-				<div className="mt-3">
+				{/* Card Body */}
+				<div className="card-body">
+					{/* Content Preview */}
 					{snippet ? (
-						<>
-							<h4 className="text-sm font-medium text-gray-700 mb-1">
-								Matching content:
+						<div className="mb-6">
+							<h4 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">
+								Matching Content
 							</h4>
 							<div
-								className="text-sm text-gray-800 bg-yellow-50 p-2 rounded"
+								className="text-sm text-gray-800 bg-gradient-to-r from-yellow-50 to-amber-50 border-l-4 border-yellow-400 p-4 rounded-r-lg"
 								dangerouslySetInnerHTML={{
 									__html: DOMPurify.sanitize(snippet),
 								}}
 							/>
-						</>
+						</div>
 					) : preview ? (
-						<>
-							<h4 className="text-sm font-medium text-gray-700 mb-1">
-								Preview:
+						<div className="mb-6">
+							<h4 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">
+								Profile Summary
 							</h4>
-							<div className="text-sm text-gray-800 bg-gray-50 p-2 rounded">
+							<div className="text-sm text-gray-800 bg-gray-50 border border-gray-200 p-4 rounded-lg leading-relaxed">
 								{preview}
 							</div>
-						</>
+						</div>
 					) : null}
+
+					{/* AI Summary */}
+					<AISummary resumeId={id} />
 				</div>
 
-				{/* Action buttons */}
-				<div className="mt-4 flex gap-2 flex-wrap">
-					<button
-						onClick={() => {
-							if (pdfUrl) {
-								setUseSimpleViewer(false);
-								setIsPDFViewerOpen(true);
-							} else {
-								alert(
-									"PDF not available for this resume. Only text content is stored."
-								);
-							}
-						}}
-						className={`text-sm flex items-center ${
-							pdfUrl
-								? "text-blue-600 hover:text-blue-800"
-								: "text-gray-400 cursor-not-allowed"
-						}`}
-					>
-						<span className="mr-1">📄</span>
-						{pdfUrl ? "View Resume" : "PDF Not Available"}
-					</button>
-
-					{pdfUrl && (
-						<>
+				{/* Card Footer */}
+				<div className="card-footer">
+					<div className="flex items-center justify-between">
+						<div className="flex items-center space-x-3">
 							<button
 								onClick={() => {
-									setUseSimpleViewer(true);
-									setIsPDFViewerOpen(true);
+									if (pdfUrl) {
+										setUseSimpleViewer(false);
+										setIsPDFViewerOpen(true);
+									} else {
+										alert(
+											"PDF not available for this resume. Only text content is stored."
+										);
+									}
 								}}
-								className="text-sm text-green-600 hover:text-green-800 flex items-center"
+								className={`btn-primary ${
+									!pdfUrl ? "opacity-50 cursor-not-allowed" : ""
+								}`}
+								disabled={!pdfUrl}
 							>
-								<span className="mr-1">🔧</span> Simple Viewer
+								<EyeIcon className="mr-2" size={16} />
+								{pdfUrl ? "View Resume" : "PDF Not Available"}
 							</button>
-							<a
-								href={pdfUrl}
-								target="_blank"
-								rel="noopener noreferrer"
-								className="text-sm text-purple-600 hover:text-purple-800 flex items-center"
-							>
-								<span className="mr-1">🔗</span> Open in Tab
-							</a>
-						</>
+
+							{pdfUrl && (
+								<>
+									<button
+										onClick={() => {
+											setUseSimpleViewer(true);
+											setIsPDFViewerOpen(true);
+										}}
+										className="btn-secondary"
+									>
+										<DocumentIcon className="mr-2" size={16} />
+										Simple View
+									</button>
+									<a
+										href={pdfUrl}
+										target="_blank"
+										rel="noopener noreferrer"
+										className="btn-ghost"
+									>
+										<ExternalLinkIcon className="mr-2" size={16} />
+										Open in Tab
+									</a>
+								</>
+							)}
+						</div>
+
+						{/* Status Indicator */}
+						<div className="flex items-center space-x-2">
+							<div
+								className={`w-2 h-2 rounded-full ${
+									pdfUrl ? "bg-green-500" : "bg-gray-400"
+								}`}
+							></div>
+							<span className="text-xs text-gray-500">
+								{pdfUrl ? "PDF Available" : "Text Only"}
+							</span>
+						</div>
+					</div>
+
+					{/* PDF Debugger - only show for resumes with PDF URLs in development */}
+					{pdfUrl && process.env.NODE_ENV === "development" && (
+						<div className="mt-4 pt-4 border-t border-gray-200">
+							<PDFDebugger pdfUrl={pdfUrl} candidateName={name} />
+						</div>
 					)}
 				</div>
-
-				<AISummary resumeId={id} />
-
-				{/* PDF Debugger - only show for resumes with PDF URLs in development */}
-				{pdfUrl && process.env.NODE_ENV === "development" && (
-					<PDFDebugger pdfUrl={pdfUrl} candidateName={name} />
-				)}
 			</div>
 
 			{/* PDF Viewer Modals */}

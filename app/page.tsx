@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import CandidateCard from "./components/CandidateCard";
+import { SearchIcon, FilterIcon, BriefcaseIcon } from "./components/icons";
 
 type SearchResult = {
 	id: string;
@@ -38,6 +39,9 @@ export default function Home() {
 	const [isLoadingResumes, setIsLoadingResumes] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const [currentPage, setCurrentPage] = useState(1);
+	const [sortBy, setSortBy] = useState<"relevance" | "name" | "recent">(
+		"relevance"
+	);
 
 	// Fetch all resumes on page load
 	useEffect(() => {
@@ -102,130 +106,286 @@ export default function Home() {
 	}, [query]);
 
 	return (
-		<main className="container mx-auto px-4 py-8">
-			<h1 className="text-3xl font-bold mb-6">
-				HireAI - CV Search & Screening
-			</h1>
-			<p className="text-lg mb-8">
-				Upload and search through candidate resumes with ease.
-			</p>
-
-			<section className="p-4 border rounded-lg bg-white shadow-sm mb-8">
-				<div className="mb-4">
-					<input
-						type="text"
-						value={query}
-						onChange={(e) => setQuery(e.target.value)}
-						placeholder="Search skills, job titles, or keywords..."
-						className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-						aria-label="Search resumes"
-					/>
-				</div>
-
-				{isLoading && (
-					<div className="text-center py-4">
-						<div className="inline-block h-6 w-6 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
-						<p className="mt-2 text-gray-600">Searching resumes...</p>
-					</div>
-				)}
-
-				{error && (
-					<div className="bg-red-50 text-red-700 p-3 rounded-lg">
-						{error}
-					</div>
-				)}
-
-				{!isLoading && !error && query.trim() && results.length === 0 && (
-					<div className="text-center py-4 text-gray-600">
-						No matching resumes found. Try different keywords.
-					</div>
-				)}
-			</section>
-
-			{/* Search Results */}
-			{query.trim() && results.length > 0 && (
-				<section>
-					<h2 className="text-xl font-semibold mb-4">
-						Search Results ({results.length} found)
-					</h2>
-					<div className="space-y-4">
-						{results.map((result) => (
-							<CandidateCard
-								key={result.id}
-								id={result.id}
-								name={result.name}
-								location={result.location}
-								snippet={result.snippet}
-								relevance={result.relevance}
-								pdfUrl={result.pdfUrl || undefined}
-								searchTerm={query}
-							/>
-						))}
-					</div>
-				</section>
-			)}
-
-			{/* All Resumes (shown when not searching) */}
-			{!query.trim() && (
-				<section>
-					<div className="flex justify-between items-center mb-4">
-						<h2 className="text-xl font-semibold">
-							All Resumes
-							{pagination && ` (${pagination.totalCount} total)`}
-						</h2>
-					</div>
-
-					{isLoadingResumes ? (
-						<div className="text-center py-8">
-							<div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
-							<p className="mt-2 text-gray-600">Loading resumes...</p>
+		<div className="min-h-screen bg-gray-50">
+			{/* Professional Header */}
+			<header className="bg-white border-b border-gray-200 shadow-sm">
+				<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+					<div className="flex items-center justify-between h-16">
+						<div className="flex items-center space-x-3">
+							<div className="flex items-center justify-center w-10 h-10 bg-blue-600 rounded-lg">
+								<BriefcaseIcon className="text-white" size={24} />
+							</div>
+							<div>
+								<h1 className="text-xl font-bold text-gray-900">
+									HireAI
+								</h1>
+								<p className="text-sm text-gray-500">
+									Talent Acquisition Platform
+								</p>
+							</div>
 						</div>
-					) : allResumes.length > 0 ? (
-						<>
-							<div className="space-y-4">
-								{allResumes.map((resume) => (
-									<CandidateCard
-										key={resume.id}
-										id={resume.id}
-										name={resume.name}
-										location={resume.location}
-										snippet=""
-										preview={resume.preview}
-										pdfUrl={resume.pdfUrl || undefined}
-									/>
-								))}
+						<div className="flex items-center space-x-4">
+							<div className="text-sm text-gray-600">
+								{pagination && (
+									<span>{pagination.totalCount} candidates</span>
+								)}
+							</div>
+						</div>
+					</div>
+				</div>
+			</header>
+
+			<main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+				{/* Search Section */}
+				<div className="mb-8">
+					<div className="text-center mb-6">
+						<h2 className="text-3xl font-bold text-gray-900 mb-2">
+							Find Your Next Hire
+						</h2>
+						<p className="text-lg text-gray-600 max-w-2xl mx-auto">
+							Search through our database of qualified candidates using
+							AI-powered matching
+						</p>
+					</div>
+
+					<div className="card max-w-4xl mx-auto">
+						<div className="card-body">
+							<div className="relative">
+								<div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+									<SearchIcon className="text-gray-400" size={20} />
+								</div>
+								<input
+									type="text"
+									value={query}
+									onChange={(e) => setQuery(e.target.value)}
+									placeholder="Search by skills, job titles, experience, or keywords..."
+									className="input-primary pl-12 pr-4 py-4 text-lg"
+									aria-label="Search resumes"
+								/>
 							</div>
 
-							{/* Pagination */}
-							{pagination && pagination.totalPages > 1 && (
-								<div className="flex justify-center items-center mt-8 space-x-4">
-									<button
-										onClick={() => setCurrentPage(currentPage - 1)}
-										disabled={!pagination.hasPrev}
-										className="px-4 py-2 bg-blue-600 text-white rounded disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-blue-700"
+							{/* Search Filters */}
+							<div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200">
+								<div className="flex items-center space-x-4">
+									<div className="flex items-center space-x-2">
+										<FilterIcon className="text-gray-400" size={16} />
+										<span className="text-sm text-gray-600">
+											Sort by:
+										</span>
+									</div>
+									<select
+										value={sortBy}
+										onChange={(e) =>
+											setSortBy(
+												e.target.value as
+													| "relevance"
+													| "name"
+													| "recent"
+											)
+										}
+										className="text-sm border border-gray-300 rounded-md px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
 									>
-										Previous
-									</button>
-									<span className="text-gray-600">
-										Page {pagination.page} of {pagination.totalPages}
+										<option value="relevance">Relevance</option>
+										<option value="name">Name</option>
+										<option value="recent">Most Recent</option>
+									</select>
+								</div>
+								{query.trim() && (
+									<div className="text-sm text-gray-500">
+										{isLoading
+											? "Searching..."
+											: `${results.length} results found`}
+									</div>
+								)}
+							</div>
+
+							{/* Loading State */}
+							{isLoading && (
+								<div className="flex items-center justify-center py-8">
+									<div className="loading-spinner"></div>
+									<span className="ml-3 text-gray-600">
+										Searching candidates...
 									</span>
-									<button
-										onClick={() => setCurrentPage(currentPage + 1)}
-										disabled={!pagination.hasNext}
-										className="px-4 py-2 bg-blue-600 text-white rounded disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-blue-700"
-									>
-										Next
-									</button>
 								</div>
 							)}
-						</>
-					) : (
-						<div className="text-center py-8 text-gray-600">
-							No resumes found. Upload some resumes to get started.
+
+							{/* Error State */}
+							{error && (
+								<div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+									<div className="flex items-center">
+										<div className="text-red-600 font-medium">
+											Search Error
+										</div>
+									</div>
+									<div className="text-red-700 text-sm mt-1">
+										{error}
+									</div>
+								</div>
+							)}
+
+							{/* No Results */}
+							{!isLoading &&
+								!error &&
+								query.trim() &&
+								results.length === 0 && (
+									<div className="text-center py-8">
+										<div className="text-gray-400 mb-2">
+											<SearchIcon size={48} className="mx-auto" />
+										</div>
+										<h3 className="text-lg font-medium text-gray-900 mb-1">
+											No candidates found
+										</h3>
+										<p className="text-gray-600">
+											Try adjusting your search terms or filters
+										</p>
+									</div>
+								)}
 						</div>
-					)}
-				</section>
-			)}
-		</main>
+					</div>
+				</div>
+
+				{/* Search Results */}
+				{query.trim() && results.length > 0 && (
+					<section className="mb-8">
+						<div className="flex items-center justify-between mb-6">
+							<h2 className="text-2xl font-bold text-gray-900">
+								Search Results
+							</h2>
+							<div className="badge badge-primary">
+								{results.length} candidates found
+							</div>
+						</div>
+						<div className="grid gap-6">
+							{results.map((result) => (
+								<CandidateCard
+									key={result.id}
+									id={result.id}
+									name={result.name}
+									location={result.location}
+									snippet={result.snippet}
+									relevance={result.relevance}
+									pdfUrl={result.pdfUrl || undefined}
+									searchTerm={query}
+								/>
+							))}
+						</div>
+					</section>
+				)}
+
+				{/* All Resumes (shown when not searching) */}
+				{!query.trim() && (
+					<section>
+						<div className="flex items-center justify-between mb-6">
+							<h2 className="text-2xl font-bold text-gray-900">
+								All Candidates
+							</h2>
+							{pagination && (
+								<div className="text-sm text-gray-600">
+									Showing{" "}
+									{(pagination.page - 1) * pagination.limit + 1}-
+									{Math.min(
+										pagination.page * pagination.limit,
+										pagination.totalCount
+									)}{" "}
+									of {pagination.totalCount}
+								</div>
+							)}
+						</div>
+
+						{isLoadingResumes ? (
+							<div className="flex items-center justify-center py-16">
+								<div className="loading-spinner"></div>
+								<span className="ml-3 text-gray-600">
+									Loading candidates...
+								</span>
+							</div>
+						) : allResumes.length > 0 ? (
+							<>
+								<div className="grid gap-6">
+									{allResumes.map((resume) => (
+										<CandidateCard
+											key={resume.id}
+											id={resume.id}
+											name={resume.name}
+											location={resume.location}
+											snippet=""
+											preview={resume.preview}
+											pdfUrl={resume.pdfUrl || undefined}
+										/>
+									))}
+								</div>
+
+								{/* Professional Pagination */}
+								{pagination && pagination.totalPages > 1 && (
+									<div className="flex items-center justify-center mt-12">
+										<nav className="flex items-center space-x-2">
+											<button
+												onClick={() =>
+													setCurrentPage(currentPage - 1)
+												}
+												disabled={!pagination.hasPrev}
+												className="btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+											>
+												Previous
+											</button>
+											<div className="flex items-center space-x-1">
+												{Array.from(
+													{
+														length: Math.min(
+															5,
+															pagination.totalPages
+														),
+													},
+													(_, i) => {
+														const pageNum = i + 1;
+														return (
+															<button
+																key={pageNum}
+																onClick={() =>
+																	setCurrentPage(pageNum)
+																}
+																className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+																	pageNum === pagination.page
+																		? "bg-blue-600 text-white"
+																		: "text-gray-700 hover:bg-gray-100"
+																}`}
+															>
+																{pageNum}
+															</button>
+														);
+													}
+												)}
+											</div>
+											<button
+												onClick={() =>
+													setCurrentPage(currentPage + 1)
+												}
+												disabled={!pagination.hasNext}
+												className="btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+											>
+												Next
+											</button>
+										</nav>
+									</div>
+								)}
+							</>
+						) : (
+							<div className="text-center py-16">
+								<div className="text-gray-400 mb-4">
+									<BriefcaseIcon size={64} className="mx-auto" />
+								</div>
+								<h3 className="text-xl font-medium text-gray-900 mb-2">
+									No candidates yet
+								</h3>
+								<p className="text-gray-600">
+									Upload some resumes to get started with your talent
+									search
+								</p>
+							</div>
+						)}
+					</section>
+				)}
+			</main>
+		</div>
 	);
 }

@@ -3,29 +3,195 @@
 @import "react-pdf/dist/esm/Page/TextLayer.css";
 
 :root {
-	--background: #ffffff;
-	--foreground: #000000;
+	/* Professional Color Palette for Recruiters */
+	--primary-50: #f0f9ff;
+	--primary-100: #e0f2fe;
+	--primary-200: #bae6fd;
+	--primary-300: #7dd3fc;
+	--primary-400: #38bdf8;
+	--primary-500: #0ea5e9;
+	--primary-600: #0284c7;
+	--primary-700: #0369a1;
+	--primary-800: #075985;
+	--primary-900: #0c4a6e;
+
+	--secondary-50: #f8fafc;
+	--secondary-100: #f1f5f9;
+	--secondary-200: #e2e8f0;
+	--secondary-300: #cbd5e1;
+	--secondary-400: #94a3b8;
+	--secondary-500: #64748b;
+	--secondary-600: #475569;
+	--secondary-700: #334155;
+	--secondary-800: #1e293b;
+	--secondary-900: #0f172a;
+
+	--accent-50: #fefce8;
+	--accent-100: #fef9c3;
+	--accent-200: #fef08a;
+	--accent-300: #fde047;
+	--accent-400: #facc15;
+	--accent-500: #eab308;
+	--accent-600: #ca8a04;
+	--accent-700: #a16207;
+	--accent-800: #854d0e;
+	--accent-900: #713f12;
+
+	--success-50: #f0fdf4;
+	--success-100: #dcfce7;
+	--success-200: #bbf7d0;
+	--success-300: #86efac;
+	--success-400: #4ade80;
+	--success-500: #22c55e;
+	--success-600: #16a34a;
+	--success-700: #15803d;
+	--success-800: #166534;
+	--success-900: #14532d;
+
+	--error-50: #fef2f2;
+	--error-100: #fee2e2;
+	--error-200: #fecaca;
+	--error-300: #fca5a5;
+	--error-400: #f87171;
+	--error-500: #ef4444;
+	--error-600: #dc2626;
+	--error-700: #b91c1c;
+	--error-800: #991b1b;
+	--error-900: #7f1d1d;
+
+	/* Typography */
+	--font-family-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+		Roboto, "Helvetica Neue", Arial, sans-serif;
+	--font-family-mono: "JetBrains Mono", "Fira Code", Consolas,
+		"Liberation Mono", Menlo, Courier, monospace;
+
+	/* Shadows */
+	--shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+	--shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+	--shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1),
+		0 4px 6px -4px rgb(0 0 0 / 0.1);
+	--shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1),
+		0 8px 10px -6px rgb(0 0 0 / 0.1);
+
+	/* Border Radius */
+	--radius-sm: 0.375rem;
+	--radius-md: 0.5rem;
+	--radius-lg: 0.75rem;
+	--radius-xl: 1rem;
+
+	/* Background */
+	--background: var(--secondary-50);
+	--foreground: var(--secondary-900);
+	--card-background: #ffffff;
+	--border-color: var(--secondary-200);
 }
 
 @media (prefers-color-scheme: dark) {
 	:root {
-		--background: #0a0a0a;
-		--foreground: #ededed;
+		--background: var(--secondary-900);
+		--foreground: var(--secondary-100);
+		--card-background: var(--secondary-800);
+		--border-color: var(--secondary-700);
 	}
 }
 
 body {
 	background-color: var(--background);
 	color: var(--foreground);
-	font-family: var(--font-sans, Arial, Helvetica, sans-serif);
+	font-family: var(--font-family-sans);
+	line-height: 1.6;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+/* Professional Button Styles */
+.btn-primary {
+	@apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200;
+}
+
+.btn-secondary {
+	@apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200;
+}
+
+.btn-ghost {
+	@apply inline-flex items-center justify-center px-3 py-2 text-sm font-medium text-gray-600 bg-transparent border border-transparent rounded-lg hover:bg-gray-100 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200;
+}
+
+/* Professional Card Styles */
+.card {
+	@apply bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden transition-all duration-200 hover:shadow-md;
+}
+
+.card-header {
+	@apply px-6 py-4 border-b border-gray-200 bg-gray-50;
+}
+
+.card-body {
+	@apply px-6 py-4;
+}
+
+.card-footer {
+	@apply px-6 py-4 border-t border-gray-200 bg-gray-50;
+}
+
+/* Professional Input Styles */
+.input-primary {
+	@apply block w-full px-4 py-3 text-gray-900 placeholder-gray-500 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200;
+}
+
+/* Professional Badge Styles */
+.badge {
+	@apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+}
+
+.badge-primary {
+	@apply bg-blue-100 text-blue-800;
+}
+
+.badge-success {
+	@apply bg-green-100 text-green-800;
+}
+
+.badge-warning {
+	@apply bg-yellow-100 text-yellow-800;
+}
+
+.badge-error {
+	@apply bg-red-100 text-red-800;
 }
 
 /* PDF Viewer Styles */
 .react-pdf__Page {
 	margin: 0 auto;
+	box-shadow: var(--shadow-lg);
+	border-radius: var(--radius-lg);
+	overflow: hidden;
 }
 
 .react-pdf__Page__canvas {
 	margin: 0 auto;
 	display: block;
+}
+
+/* Loading Animation */
+.loading-spinner {
+	@apply inline-block w-6 h-6 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin;
+}
+
+/* Professional Modal Backdrop */
+.modal-backdrop {
+	@apply fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4;
+}
+
+.modal-content {
+	@apply bg-white rounded-2xl shadow-2xl max-w-6xl w-full max-h-[95vh] overflow-hidden;
+}
+
+/* Smooth Transitions */
+* {
+	transition-property: color, background-color, border-color,
+		text-decoration-color, fill, stroke, opacity, box-shadow, transform,
+		filter, backdrop-filter;
+	transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+	transition-duration: 150ms;
 }

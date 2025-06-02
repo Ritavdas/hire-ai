@@ -4,6 +4,15 @@ import React, { useState, useEffect } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
+import {
+	CloseIcon,
+	ChevronLeftIcon,
+	ChevronRightIcon,
+	ZoomInIcon,
+	ZoomOutIcon,
+	DocumentIcon,
+	ExternalLinkIcon,
+} from "./icons";
 
 // Set up PDF.js worker with better error handling
 if (typeof window !== "undefined") {
@@ -37,6 +46,8 @@ export default function PDFViewer({
 	const [pageNumber, setPageNumber] = useState<number>(1);
 	const [loading, setLoading] = useState<boolean>(true);
 	const [error, setError] = useState<string | null>(null);
+	const [scale, setScale] = useState<number>(1.0);
+	const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
 
 	// Reset state when pdfUrl or isOpen changes
 	useEffect(() => {
@@ -84,58 +95,190 @@ export default function PDFViewer({
 		setPageNumber((prev) => Math.min(prev + 1, numPages));
 	};
 
+	const zoomIn = () => {
+		setScale((prev) => Math.min(prev + 0.25, 3.0));
+	};
+
+	const zoomOut = () => {
+		setScale((prev) => Math.max(prev - 0.25, 0.5));
+	};
+
+	const resetZoom = () => {
+		setScale(1.0);
+	};
+
+	const toggleFullscreen = () => {
+		setIsFullscreen(!isFullscreen);
+	};
+
 	if (!isOpen) return null;
 
 	return (
-		<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-			<div className="bg-white rounded-lg max-w-4xl max-h-[90vh] w-full mx-4 flex flex-col">
-				{/* Header */}
-				<div className="flex justify-between items-center p-4 border-b">
-					<div>
-						<h2 className="text-xl font-semibold">{candidateName}</h2>
-						{searchTerm && (
-							<p className="text-sm text-gray-600">
-								Searching for: &ldquo;{searchTerm}&rdquo;
-							</p>
-						)}
+		<div className="modal-backdrop">
+			<div
+				className={`modal-content ${
+					isFullscreen ? "max-w-full max-h-full" : "max-w-6xl max-h-[95vh]"
+				}`}
+			>
+				{/* Professional Header */}
+				<div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+					<div className="flex items-center space-x-4">
+						<div className="flex items-center justify-center w-10 h-10 bg-blue-600 rounded-lg">
+							<DocumentIcon className="text-white" size={20} />
+						</div>
+						<div>
+							<h2 className="text-xl font-bold text-gray-900">
+								{candidateName}
+							</h2>
+							<div className="flex items-center space-x-4 text-sm text-gray-600">
+								{searchTerm && (
+									<span>
+										Searching:{" "}
+										<span className="font-medium text-blue-600">
+											&ldquo;{searchTerm}&rdquo;
+										</span>
+									</span>
+								)}
+								{numPages > 0 && (
+									<span>
+										{numPages} page{numPages > 1 ? "s" : ""}
+									</span>
+								)}
+							</div>
+						</div>
 					</div>
 					<button
 						onClick={onClose}
-						className="text-gray-500 hover:text-gray-700 text-2xl"
+						className="btn-ghost p-2"
 						aria-label="Close PDF viewer"
 					>
-						×
+						<CloseIcon size={20} />
 					</button>
 				</div>
 
+				{/* Toolbar */}
+				{!loading && !error && numPages > 0 && (
+					<div className="flex items-center justify-between px-6 py-3 border-b border-gray-200 bg-gray-50">
+						{/* Navigation Controls */}
+						<div className="flex items-center space-x-2">
+							<button
+								onClick={goToPrevPage}
+								disabled={pageNumber <= 1}
+								className="btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+							>
+								<ChevronLeftIcon size={16} />
+							</button>
+							<span className="text-sm text-gray-600 min-w-[100px] text-center">
+								Page {pageNumber} of {numPages}
+							</span>
+							<button
+								onClick={goToNextPage}
+								disabled={pageNumber >= numPages}
+								className="btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+							>
+								<ChevronRightIcon size={16} />
+							</button>
+						</div>
+
+						{/* Zoom Controls */}
+						<div className="flex items-center space-x-2">
+							<button
+								onClick={zoomOut}
+								disabled={scale <= 0.5}
+								className="btn-ghost disabled:opacity-50 disabled:cursor-not-allowed"
+								title="Zoom Out"
+							>
+								<ZoomOutIcon size={16} />
+							</button>
+							<span className="text-sm text-gray-600 min-w-[60px] text-center">
+								{Math.round(scale * 100)}%
+							</span>
+							<button
+								onClick={zoomIn}
+								disabled={scale >= 3.0}
+								className="btn-ghost disabled:opacity-50 disabled:cursor-not-allowed"
+								title="Zoom In"
+							>
+								<ZoomInIcon size={16} />
+							</button>
+							<button
+								onClick={resetZoom}
+								className="btn-ghost text-xs"
+								title="Reset Zoom"
+							>
+								Reset
+							</button>
+						</div>
+
+						{/* Action Controls */}
+						<div className="flex items-center space-x-2">
+							<button
+								onClick={toggleFullscreen}
+								className="btn-ghost"
+								title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+							>
+								{isFullscreen ? "Exit" : "Fullscreen"}
+							</button>
+							<a
+								href={pdfUrl}
+								target="_blank"
+								rel="noopener noreferrer"
+								className="btn-ghost"
+								title="Open in New Tab"
+							>
+								<ExternalLinkIcon size={16} />
+							</a>
+						</div>
+					</div>
+				)}
+
 				{/* PDF Content */}
-				<div className="flex-1 overflow-auto p-4">
+				<div className="flex-1 overflow-auto bg-gray-100">
 					{loading && (
-						<div className="flex items-center justify-center h-64">
-							<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-							<span className="ml-2">Loading PDF...</span>
+						<div className="flex items-center justify-center h-96">
+							<div className="text-center">
+								<div className="loading-spinner mb-4"></div>
+								<p className="text-gray-600 font-medium">
+									Loading PDF...
+								</p>
+								<p className="text-sm text-gray-500 mt-1">
+									Please wait while we prepare the document
+								</p>
+							</div>
 						</div>
 					)}
 
 					{error && (
-						<div className="flex items-center justify-center h-64">
-							<div className="text-red-600 text-center">
-								<p className="text-lg font-semibold">
-									Error Loading PDF
-								</p>
-								<p className="text-sm">{error}</p>
-								<button
-									onClick={() => window.open(pdfUrl, "_blank")}
-									className="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-								>
-									Open in New Tab
-								</button>
+						<div className="flex items-center justify-center h-96">
+							<div className="text-center max-w-md">
+								<div className="text-red-500 mb-4">
+									<DocumentIcon size={48} className="mx-auto" />
+								</div>
+								<h3 className="text-lg font-semibold text-gray-900 mb-2">
+									Unable to Load PDF
+								</h3>
+								<p className="text-gray-600 mb-4">{error}</p>
+								<div className="space-y-2">
+									<button
+										onClick={() => window.open(pdfUrl, "_blank")}
+										className="btn-primary"
+									>
+										<ExternalLinkIcon className="mr-2" size={16} />
+										Open in New Tab
+									</button>
+									<button
+										onClick={() => window.location.reload()}
+										className="btn-secondary ml-2"
+									>
+										Retry
+									</button>
+								</div>
 							</div>
 						</div>
 					)}
 
 					{!loading && !error && (
-						<div className="flex flex-col items-center">
+						<div className="flex flex-col items-center py-6">
 							<Document
 								file={pdfUrl}
 								options={{
@@ -147,11 +290,15 @@ export default function PDFViewer({
 								onLoadSuccess={onDocumentLoadSuccess}
 								onLoadError={onDocumentLoadError}
 								onLoadStart={() => console.log("PDF loading started")}
-								className="border border-gray-300"
+								className="shadow-lg"
 								loading={
-									<div className="flex items-center justify-center h-64">
-										<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-										<span className="ml-2">Loading PDF...</span>
+									<div className="flex items-center justify-center h-96">
+										<div className="text-center">
+											<div className="loading-spinner mb-4"></div>
+											<p className="text-gray-600">
+												Loading document...
+											</p>
+										</div>
 									</div>
 								}
 								error={
@@ -183,11 +330,16 @@ export default function PDFViewer({
 									pageNumber={pageNumber}
 									width={
 										typeof window !== "undefined"
-											? Math.min(800, window.innerWidth - 100)
-											: 800
+											? Math.min(
+													isFullscreen
+														? window.innerWidth - 200
+														: 800,
+													window.innerWidth - 100
+											  ) * scale
+											: 800 * scale
 									}
-									renderTextLayer={false}
-									renderAnnotationLayer={false}
+									renderTextLayer={true}
+									renderAnnotationLayer={true}
 									onLoadSuccess={() =>
 										console.log(`Page ${pageNumber} loaded`)
 									}
@@ -198,16 +350,29 @@ export default function PDFViewer({
 										)
 									}
 									loading={
-										<div className="flex items-center justify-center h-64">
-											<div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-											<span className="ml-2">Loading page...</span>
+										<div className="flex items-center justify-center h-96">
+											<div className="text-center">
+												<div className="loading-spinner mb-2"></div>
+												<p className="text-gray-600 text-sm">
+													Loading page {pageNumber}...
+												</p>
+											</div>
 										</div>
 									}
 									error={
-										<div className="flex items-center justify-center h-64">
-											<div className="text-red-600 text-center">
-												<p className="text-sm">
+										<div className="flex items-center justify-center h-96">
+											<div className="text-center">
+												<div className="text-red-500 mb-2">
+													<DocumentIcon
+														size={32}
+														className="mx-auto"
+													/>
+												</div>
+												<p className="text-red-600 font-medium">
 													Failed to load page {pageNumber}
+												</p>
+												<p className="text-sm text-gray-500 mt-1">
+													Try refreshing or opening in a new tab
 												</p>
 											</div>
 										</div>
@@ -218,41 +383,29 @@ export default function PDFViewer({
 					)}
 				</div>
 
-				{/* Footer with navigation */}
-				{!loading && !error && numPages > 0 && (
-					<div className="flex justify-between items-center p-4 border-t bg-gray-50">
-						<button
-							onClick={goToPrevPage}
-							disabled={pageNumber <= 1}
-							className="px-4 py-2 bg-blue-600 text-white rounded disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-blue-700"
-						>
-							Previous
-						</button>
-
-						<span className="text-sm text-gray-600">
-							Page {pageNumber} of {numPages}
-						</span>
-
-						<button
-							onClick={goToNextPage}
-							disabled={pageNumber >= numPages}
-							className="px-4 py-2 bg-blue-600 text-white rounded disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-blue-700"
-						>
-							Next
-						</button>
+				{/* Footer */}
+				<div className="border-t border-gray-200 bg-gray-50 px-6 py-4">
+					<div className="flex items-center justify-between">
+						<div className="text-sm text-gray-600">
+							{!loading && !error && numPages > 0 && (
+								<span>
+									Document loaded successfully • {numPages} page
+									{numPages > 1 ? "s" : ""}
+								</span>
+							)}
+						</div>
+						<div className="flex items-center space-x-3">
+							<a
+								href={pdfUrl}
+								target="_blank"
+								rel="noopener noreferrer"
+								className="text-sm text-blue-600 hover:text-blue-800 flex items-center"
+							>
+								<ExternalLinkIcon className="mr-1" size={14} />
+								Open in new tab
+							</a>
+						</div>
 					</div>
-				)}
-
-				{/* Alternative link if PDF viewer fails */}
-				<div className="p-2 text-center border-t">
-					<a
-						href={pdfUrl}
-						target="_blank"
-						rel="noopener noreferrer"
-						className="text-sm text-blue-600 hover:text-blue-800"
-					>
-						Open PDF in new tab
-					</a>
 				</div>
 			</div>
 		</div>

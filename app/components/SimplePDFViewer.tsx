@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { CloseIcon, DocumentIcon, ExternalLinkIcon } from "./icons";
 
 type SimplePDFViewerProps = {
 	pdfUrl: string;
@@ -18,51 +19,73 @@ export default function SimplePDFViewer({
 	if (!isOpen) return null;
 
 	return (
-		<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-			<div className="bg-white rounded-lg max-w-6xl max-h-[95vh] w-full mx-4 flex flex-col">
-				{/* Header */}
-				<div className="flex justify-between items-center p-4 border-b">
-					<div>
-						<h2 className="text-xl font-semibold">{candidateName}</h2>
-						<p className="text-sm text-gray-600">PDF Viewer (Fallback)</p>
+		<div className="modal-backdrop">
+			<div className="modal-content max-w-7xl max-h-[95vh]">
+				{/* Professional Header */}
+				<div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-green-50 to-emerald-50">
+					<div className="flex items-center space-x-4">
+						<div className="flex items-center justify-center w-10 h-10 bg-green-600 rounded-lg">
+							<DocumentIcon className="text-white" size={20} />
+						</div>
+						<div>
+							<h2 className="text-xl font-bold text-gray-900">
+								{candidateName}
+							</h2>
+							<p className="text-sm text-gray-600">Simple PDF Viewer</p>
+						</div>
 					</div>
-					<button
-						onClick={onClose}
-						className="text-gray-500 hover:text-gray-700 text-2xl"
-						aria-label="Close PDF viewer"
-					>
-						×
-					</button>
-				</div>
-
-				{/* PDF Content */}
-				<div className="flex-1 p-4">
-					<iframe
-						src={pdfUrl}
-						className="w-full h-full border border-gray-300 rounded"
-						title={`Resume for ${candidateName}`}
-						style={{ minHeight: "600px" }}
-					/>
-				</div>
-
-				{/* Footer */}
-				<div className="p-4 border-t bg-gray-50 text-center">
-					<div className="flex justify-center gap-4">
+					<div className="flex items-center space-x-3">
 						<a
 							href={pdfUrl}
 							target="_blank"
 							rel="noopener noreferrer"
-							className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+							className="btn-ghost"
+							title="Open in New Tab"
 						>
-							Open in New Tab
+							<ExternalLinkIcon size={16} />
 						</a>
-						<a
-							href={pdfUrl}
-							download={`${candidateName}-resume.pdf`}
-							className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+						<button
+							onClick={onClose}
+							className="btn-ghost p-2"
+							aria-label="Close PDF viewer"
 						>
-							Download PDF
-						</a>
+							<CloseIcon size={20} />
+						</button>
+					</div>
+				</div>
+
+				{/* PDF Content */}
+				<div className="flex-1 p-6 bg-gray-50">
+					<div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+						<iframe
+							src={pdfUrl}
+							className="w-full h-full"
+							title={`Resume for ${candidateName}`}
+							style={{ minHeight: "700px" }}
+							loading="lazy"
+						/>
+					</div>
+				</div>
+
+				{/* Footer */}
+				<div className="border-t border-gray-200 bg-gray-50 px-6 py-4">
+					<div className="flex items-center justify-between">
+						<div className="text-sm text-gray-600">
+							<span>
+								Fallback PDF viewer • Compatible with all browsers
+							</span>
+						</div>
+						<div className="flex items-center space-x-3">
+							<a
+								href={pdfUrl}
+								target="_blank"
+								rel="noopener noreferrer"
+								className="text-sm text-blue-600 hover:text-blue-800 flex items-center"
+							>
+								<ExternalLinkIcon className="mr-1" size={14} />
+								Open in new tab
+							</a>
+						</div>
 					</div>
 				</div>
 			</div>
