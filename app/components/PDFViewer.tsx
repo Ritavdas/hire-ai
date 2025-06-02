@@ -28,6 +28,15 @@ export default function PDFViewer({
 	const [loading, setLoading] = useState<boolean>(true);
 	const [error, setError] = useState<string | null>(null);
 
+	// Reset state when pdfUrl or isOpen changes
+	useEffect(() => {
+		if (isOpen) {
+			setPageNumber(1);
+			setLoading(true);
+			setError(null);
+		}
+	}, [pdfUrl, isOpen]);
+
 	function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
 		setNumPages(numPages);
 		setLoading(false);
@@ -59,7 +68,7 @@ export default function PDFViewer({
 						<h2 className="text-xl font-semibold">{candidateName}</h2>
 						{searchTerm && (
 							<p className="text-sm text-gray-600">
-								Searching for: "{searchTerm}"
+								Searching for: &ldquo;{searchTerm}&rdquo;
 							</p>
 						)}
 					</div>

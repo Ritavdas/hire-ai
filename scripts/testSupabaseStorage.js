@@ -4,6 +4,18 @@ import dotenv from "dotenv";
 // Load environment variables
 dotenv.config();
 
+// Validate environment variables
+if (
+	!process.env.NEXT_PUBLIC_SUPABASE_URL ||
+	!process.env.SUPABASE_SERVICE_ROLE_KEY
+) {
+	console.error("Error: Required environment variables are not set");
+	console.error(
+		"Please set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY"
+	);
+	process.exit(1);
+}
+
 // Create Supabase client
 const supabase = createClient(
 	process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -22,32 +34,41 @@ async function testStorage() {
 	try {
 		// Test 1: List buckets
 		console.log("1. Listing all buckets...");
-		const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
-		
+		const { data: buckets, error: bucketsError } =
+			await supabase.storage.listBuckets();
+
 		if (bucketsError) {
 			console.log(`✗ Error listing buckets: ${bucketsError.message}`);
 			return;
 		}
-		
+
 		console.log(`✓ Found ${buckets.length} buckets:`);
-		buckets.forEach(bucket => {
-			console.log(`  - ${bucket.name} (${bucket.public ? 'Public' : 'Private'})`);
+		buckets.forEach((bucket) => {
+			console.log(
+				`  - ${bucket.name} (${bucket.public ? "Public" : "Private"})`
+			);
 		});
 
 		// Check if resumes bucket exists
-		const resumesBucket = buckets.find(b => b.name === 'resumes');
+		const resumesBucket = buckets.find((b) => b.name === "resumes");
 		if (!resumesBucket) {
 			console.log(`\n✗ 'resumes' bucket not found!`);
-			console.log(`Available buckets: ${buckets.map(b => b.name).join(', ')}`);
+			console.log(
+				`Available buckets: ${buckets.map((b) => b.name).join(", ")}`
+			);
 			return;
 		}
 
-		console.log(`\n✓ 'resumes' bucket found (${resumesBucket.public ? 'Public' : 'Private'})`);
+		console.log(
+			`\n✓ 'resumes' bucket found (${
+				resumesBucket.public ? "Public" : "Private"
+			})`
+		);
 
 		// Test 2: List files in resumes bucket
 		console.log("\n2. Listing files in 'resumes' bucket...");
 		const { data: files, error: filesError } = await supabase.storage
-			.from('resumes')
+			.from("resumes")
 			.list();
 
 		if (filesError) {
@@ -58,8 +79,10 @@ async function testStorage() {
 		console.log(`✓ Found ${files.length} files in resumes bucket`);
 		if (files.length > 0) {
 			console.log("First few files:");
-			files.slice(0, 3).forEach(file => {
-				console.log(`  - ${file.name} (${file.metadata?.size || 'unknown'} bytes)`);
+			files.slice(0, 3).forEach((file) => {
+				console.log(
+					`  - ${file.name} (${file.metadata?.size || "unknown"} bytes)`
+				);
 			});
 		}
 
@@ -68,7 +91,7 @@ async function testStorage() {
 			console.log("\n3. Testing public URL generation...");
 			const firstFile = files[0];
 			const { data: urlData } = supabase.storage
-				.from('resumes')
+				.from("resumes")
 				.getPublicUrl(firstFile.name);
 
 			console.log(`✓ Public URL for ${firstFile.name}:`);
@@ -77,20 +100,29 @@ async function testStorage() {
 			// Test 4: Test if URL is accessible
 			console.log("\n4. Testing URL accessibility...");
 			try {
-				const response = await fetch(urlData.publicUrl, { method: 'HEAD' });
+				const response = await fetch(urlData.publicUrl, { method: "HEAD" });
 				if (response.ok) {
 					console.log(`✓ URL is accessible (${response.status})`);
 				} else {
-					console.log(`✗ URL not accessible (${response.status} ${response.statusText})`);
+					console.log(
+						`✗ URL not accessible (${response.status} ${response.statusText})`
+					);
 				}
 			} catch (fetchError) {
 				console.log(`✗ Error accessing URL: ${fetchError.message}`);
 			}
 		}
-
 	} catch (error) {
 		console.error("Test failed:", error.message);
 	}
 }
 
-testStorage();
+testStorage()
+	.then(() => {
+		console.log("\nTest completed successfully!");
+		process.exit(0);
+	})
+	.catch((error) => {
+		console.error("\nTest failed with error:", error);
+		process.exit(1);
+	});

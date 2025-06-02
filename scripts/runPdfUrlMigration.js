@@ -27,11 +27,25 @@ async function runPdfUrlMigration() {
 
 	try {
 		// Read the migration file
-		const migrationPath = path.join(__dirname, "../db/migrations/add_pdf_url.sql");
+		const migrationPath = path.join(
+			__dirname,
+			"../db/migrations/add_pdf_url.sql"
+		);
 		const migrationSQL = fs.readFileSync(migrationPath, "utf8");
 
-		// Execute the migration
-		await pool.query(migrationSQL);
+		// Execute the migration within a transaction
+		const client = await pool.connect();
+		try {
+			await client.query("BEGIN");
+			await client.query(migrationSQL);
+			await client.query("COMMIT");
+			console.log("PDF URL migration completed successfully");
+		} catch (error) {
+			await client.query("ROLLBACK");
+			throw error;
+		} finally {
+			client.release();
+		}
 		console.log("PDF URL migration completed successfully");
 	} catch (error) {
 		console.error("Migration failed:", error);
