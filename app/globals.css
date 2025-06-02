@@ -1,14 +1,16 @@
 @import "tailwindcss";
+@import "react-pdf/dist/esm/Page/AnnotationLayer.css";
+@import "react-pdf/dist/esm/Page/TextLayer.css";
 
 :root {
-	--background: #000000;
-	/* --foreground: #ffffff; */
+	--background: #ffffff;
+	--foreground: #000000;
 }
 
 @media (prefers-color-scheme: dark) {
 	:root {
 		--background: #0a0a0a;
-		/* --foreground: #ededed; */
+		--foreground: #ededed;
 	}
 }
 
@@ -16,4 +18,14 @@ body {
 	background-color: var(--background);
 	color: var(--foreground);
 	font-family: var(--font-sans, Arial, Helvetica, sans-serif);
+}
+
+/* PDF Viewer Styles */
+.react-pdf__Page {
+	margin: 0 auto;
+}
+
+.react-pdf__Page__canvas {
+	margin: 0 auto;
+	display: block;
 }

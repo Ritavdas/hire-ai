@@ -16,5 +16,6 @@ export const resumes = pgTable("resumes", {
 	name: text("name").notNull(),
 	location: text("location"),
 	rawText: text("raw_text").notNull(),
+	pdfUrl: text("pdf_url"), // Supabase Storage URL
 	tsv: tsvector("tsv"),
 });

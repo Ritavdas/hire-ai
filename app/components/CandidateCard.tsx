@@ -1,13 +1,17 @@
-import React from "react";
+import React, { useState } from "react";
 import DOMPurify from "dompurify";
 import AISummary from "./AISummary";
+import PDFViewer from "./PDFViewer";
 
 type CandidateCardProps = {
 	id: string;
 	name: string;
 	location: string | null;
 	snippet: string;
-	relevance: number;
+	relevance?: number;
+	pdfUrl?: string;
+	preview?: string;
+	searchTerm?: string;
 };
 
 export default function CandidateCard({
@@ -16,33 +20,91 @@ export default function CandidateCard({
 	location,
 	snippet,
 	relevance,
+	pdfUrl,
+	preview,
+	searchTerm,
 }: CandidateCardProps) {
+	const [isPDFViewerOpen, setIsPDFViewerOpen] = useState(false);
 	return (
-		<div className="border rounded-lg p-4 mb-4 bg-white shadow-sm hover:shadow-md transition-shadow">
-			<div className="flex justify-between items-start mb-2">
-				<h3 className="text-lg font-semibold">{name}</h3>
-				<span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded">
-					{relevance}% match
-				</span>
+		<>
+			<div className="border rounded-lg p-4 mb-4 bg-white shadow-sm hover:shadow-md transition-shadow">
+				<div className="flex justify-between items-start mb-2">
+					<h3 className="text-lg font-semibold">{name}</h3>
+					{relevance && (
+						<span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded">
+							{relevance}% match
+						</span>
+					)}
+				</div>
+
+				{location && (
+					<p className="text-gray-600 text-sm mb-2">
+						<span className="inline-block mr-1">📍</span> {location}
+					</p>
+				)}
+
+				{/* Show snippet for search results or preview for all resumes */}
+				<div className="mt-3">
+					{snippet ? (
+						<>
+							<h4 className="text-sm font-medium text-gray-700 mb-1">
+								Matching content:
+							</h4>
+							<div
+								className="text-sm text-gray-800 bg-yellow-50 p-2 rounded"
+								dangerouslySetInnerHTML={{
+									__html: DOMPurify.sanitize(snippet),
+								}}
+							/>
+						</>
+					) : preview ? (
+						<>
+							<h4 className="text-sm font-medium text-gray-700 mb-1">
+								Preview:
+							</h4>
+							<div className="text-sm text-gray-800 bg-gray-50 p-2 rounded">
+								{preview}
+							</div>
+						</>
+					) : null}
+				</div>
+
+				{/* Action buttons */}
+				<div className="mt-4 flex gap-2">
+					<button
+						onClick={() => {
+							if (pdfUrl) {
+								setIsPDFViewerOpen(true);
+							} else {
+								alert(
+									"PDF not available for this resume. Only text content is stored."
+								);
+							}
+						}}
+						className={`text-sm flex items-center ${
+							pdfUrl
+								? "text-blue-600 hover:text-blue-800"
+								: "text-gray-400 cursor-not-allowed"
+						}`}
+					>
+						<span className="mr-1">📄</span>
+						{pdfUrl ? "View Resume" : "PDF Not Available"}
+					</button>
+				</div>
+
+				<AISummary resumeId={id} />
 			</div>
 
-			{location && (
-				<p className="text-gray-600 text-sm mb-2">
-					<span className="inline-block mr-1">📍</span> {location}
-				</p>
-			)}
-
-			<div className="mt-3">
-				<h4 className="text-sm font-medium text-gray-700 mb-1">
-					Matching content:
-				</h4>
-				<div
-					className="text-sm text-gray-800 bg-yellow-50 p-2 rounded"
-					dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(snippet) }}
+			{/* PDF Viewer Modal */}
+			{pdfUrl && (
+				<PDFViewer
+					pdfUrl={pdfUrl}
+					candidateName={name}
+					isOpen={isPDFViewerOpen}
+					onClose={() => setIsPDFViewerOpen(false)}
+					searchTerm={searchTerm}
 				/>
-			</div>
-
-			<AISummary resumeId={id} />
-		</div>
+			)}
+		</>
 	);
 }

@@ -9,13 +9,64 @@ type SearchResult = {
 	location: string | null;
 	snippet: string;
 	relevance: number;
+	pdfUrl?: string | null;
+};
+
+type Resume = {
+	id: string;
+	name: string;
+	location: string | null;
+	pdfUrl: string | null;
+	preview: string;
+};
+
+type PaginationInfo = {
+	page: number;
+	limit: number;
+	totalCount: number;
+	totalPages: number;
+	hasNext: boolean;
+	hasPrev: boolean;
 };
 
 export default function Home() {
 	const [query, setQuery] = useState("");
 	const [results, setResults] = useState<SearchResult[]>([]);
+	const [allResumes, setAllResumes] = useState<Resume[]>([]);
+	const [pagination, setPagination] = useState<PaginationInfo | null>(null);
 	const [isLoading, setIsLoading] = useState(false);
+	const [isLoadingResumes, setIsLoadingResumes] = useState(true);
 	const [error, setError] = useState<string | null>(null);
+	const [currentPage, setCurrentPage] = useState(1);
+
+	// Fetch all resumes on page load
+	useEffect(() => {
+		const fetchAllResumes = async () => {
+			setIsLoadingResumes(true);
+			setError(null);
+
+			try {
+				const response = await fetch(
+					`/api/resumes?page=${currentPage}&limit=20`
+				);
+
+				if (!response.ok) {
+					throw new Error("Failed to fetch resumes");
+				}
+
+				const data = await response.json();
+				setAllResumes(data.resumes);
+				setPagination(data.pagination);
+			} catch (err) {
+				console.error("Error fetching resumes:", err);
+				setError("Failed to load resumes. Please try again.");
+			} finally {
+				setIsLoadingResumes(false);
+			}
+		};
+
+		fetchAllResumes();
+	}, [currentPage]);
 
 	// Debounced search effect
 	useEffect(() => {
@@ -91,9 +142,12 @@ export default function Home() {
 				)}
 			</section>
 
-			{results.length > 0 && (
+			{/* Search Results */}
+			{query.trim() && results.length > 0 && (
 				<section>
-					<h2 className="text-xl font-semibold mb-4">Search Results</h2>
+					<h2 className="text-xl font-semibold mb-4">
+						Search Results ({results.length} found)
+					</h2>
 					<div className="space-y-4">
 						{results.map((result) => (
 							<CandidateCard
@@ -103,9 +157,73 @@ export default function Home() {
 								location={result.location}
 								snippet={result.snippet}
 								relevance={result.relevance}
+								pdfUrl={result.pdfUrl || undefined}
+								searchTerm={query}
 							/>
 						))}
 					</div>
+				</section>
+			)}
+
+			{/* All Resumes (shown when not searching) */}
+			{!query.trim() && (
+				<section>
+					<div className="flex justify-between items-center mb-4">
+						<h2 className="text-xl font-semibold">
+							All Resumes
+							{pagination && ` (${pagination.totalCount} total)`}
+						</h2>
+					</div>
+
+					{isLoadingResumes ? (
+						<div className="text-center py-8">
+							<div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
+							<p className="mt-2 text-gray-600">Loading resumes...</p>
+						</div>
+					) : allResumes.length > 0 ? (
+						<>
+							<div className="space-y-4">
+								{allResumes.map((resume) => (
+									<CandidateCard
+										key={resume.id}
+										id={resume.id}
+										name={resume.name}
+										location={resume.location}
+										snippet=""
+										preview={resume.preview}
+										pdfUrl={resume.pdfUrl || undefined}
+									/>
+								))}
+							</div>
+
+							{/* Pagination */}
+							{pagination && pagination.totalPages > 1 && (
+								<div className="flex justify-center items-center mt-8 space-x-4">
+									<button
+										onClick={() => setCurrentPage(currentPage - 1)}
+										disabled={!pagination.hasPrev}
+										className="px-4 py-2 bg-blue-600 text-white rounded disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-blue-700"
+									>
+										Previous
+									</button>
+									<span className="text-gray-600">
+										Page {pagination.page} of {pagination.totalPages}
+									</span>
+									<button
+										onClick={() => setCurrentPage(currentPage + 1)}
+										disabled={!pagination.hasNext}
+										className="px-4 py-2 bg-blue-600 text-white rounded disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-blue-700"
+									>
+										Next
+									</button>
+								</div>
+							)}
+						</>
+					) : (
+						<div className="text-center py-8 text-gray-600">
+							No resumes found. Upload some resumes to get started.
+						</div>
+					)}
 				</section>
 			)}
 		</main>
