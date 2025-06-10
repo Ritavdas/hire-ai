@@ -4,6 +4,8 @@ import AISummary from "./AISummary";
 import PDFViewer from "./PDFViewer";
 import SimplePDFViewer from "./SimplePDFViewer";
 import PDFDebugger from "./PDFDebugger";
+import BadgeDisplay from "./BadgeDisplay";
+import AvailabilityWidget from "./AvailabilityWidget";
 import {
 	DocumentIcon,
 	EyeIcon,
@@ -11,6 +13,7 @@ import {
 	LocationIcon,
 	UserIcon,
 	StarIcon,
+	ClockIcon,
 } from "./icons";
 
 type CandidateCardProps = {
@@ -94,6 +97,16 @@ export default function CandidateCard({
 							</div>
 						</div>
 					) : null}
+
+					{/* Availability Status */}
+					<div className="mb-6">
+						<AvailabilityWidget resumeId={id} isCandidate={false} />
+					</div>
+
+					{/* Verified Badges */}
+					<div className="mb-6">
+						<BadgeDisplay resumeId={id} compact={true} maxDisplay={4} />
+					</div>
 
 					{/* AI Summary */}
 					<AISummary resumeId={id} />

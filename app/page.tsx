@@ -125,6 +125,10 @@ export default function Home() {
 							</div>
 						</div>
 						<div className="flex items-center space-x-4">
+							<a href="/jobs" className="btn-secondary">
+								<BriefcaseIcon className="mr-2" size={16} />
+								Manage Jobs
+							</a>
 							<div className="text-sm text-gray-600">
 								{pagination && (
 									<span>{pagination.totalCount} candidates</span>
