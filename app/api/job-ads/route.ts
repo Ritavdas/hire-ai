@@ -9,6 +9,43 @@ const openai = new OpenAI({
 	apiKey: process.env.OPENAI_API_KEY,
 });
 
+// Type definitions
+interface JobAd {
+	board: string;
+	boardName: string;
+	content: string;
+	title: string;
+	tags: string[];
+	estimatedReach: number;
+}
+
+interface JobBoard {
+	name: string;
+	tags: string[];
+	maxLength: number;
+	requiresLocation: boolean;
+}
+
+interface Job {
+	id: string;
+	title: string;
+	description: string;
+	skills_required?: string[] | null;
+	skills_preferred?: string[] | null;
+	experience_min?: number | null;
+	experience_max?: number | null;
+	location?: string | null;
+	remote_friendly?: boolean | null;
+	salary_min?: number | null;
+	salary_max?: number | null;
+}
+
+interface PublishResult {
+	postId: string;
+	url: string;
+	expiresAt: Date;
+}
+
 // Job board configurations
 const JOB_BOARDS = {
 	remote_ok: {
@@ -73,7 +110,7 @@ export async function POST(request: NextRequest) {
 				}
 
 				const jobAd = await generateJobAd(
-					job,
+					job as Job,
 					board,
 					tone,
 					includeDEI,
@@ -119,7 +156,7 @@ export async function PUT(request: NextRequest) {
 
 		const publishResults = await Promise.all(
 			publishToBoards.map(async (boardKey: string) => {
-				const ad = ads.find((a: any) => a.board === boardKey);
+				const ad = ads.find((a: JobAd) => a.board === boardKey);
 				if (!ad) {
 					return {
 						board: boardKey,
@@ -187,8 +224,8 @@ export async function PUT(request: NextRequest) {
 }
 
 async function generateJobAd(
-	job: any,
-	board: any,
+	job: Job,
+	board: JobBoard,
 	tone: string,
 	includeDEI: boolean,
 	customPrompt?: string
@@ -254,18 +291,22 @@ async function generateJobAd(
 	};
 }
 
-async function publishToJobBoard(boardKey: string, ad: any, jobId: string) {
+async function publishToJobBoard(
+	boardKey: string,
+	ad: JobAd,
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	_jobId: string
+): Promise<PublishResult> {
 	// This is a simulation - replace with actual job board API integrations
-
 	switch (boardKey) {
 		case "remote_ok":
 			return await publishToRemoteOK(ad);
 		case "linkedin":
-			return await publishToLinkedIn(ad);
+			return await publishToLinkedIn();
 		case "hacker_news":
-			return await publishToHackerNews(ad);
+			return await publishToHackerNews();
 		case "angel_list":
-			return await publishToAngelList(ad);
+			return await publishToAngelList();
 		default:
 			throw new Error(`Unsupported job board: ${boardKey}`);
 	}
@@ -274,7 +315,7 @@ async function publishToJobBoard(boardKey: string, ad: any, jobId: string) {
 // Simulated job board publishing functions
 // In production, these would make actual API calls to job boards
 
-async function publishToRemoteOK(ad: any) {
+async function publishToRemoteOK(ad: JobAd): Promise<PublishResult> {
 	// Simulate Remote OK API call
 	await new Promise((resolve) => setTimeout(resolve, 1000));
 
@@ -287,7 +328,7 @@ async function publishToRemoteOK(ad: any) {
 	};
 }
 
-async function publishToLinkedIn(ad: any) {
+async function publishToLinkedIn(): Promise<PublishResult> {
 	// Simulate LinkedIn API call
 	await new Promise((resolve) => setTimeout(resolve, 1500));
 
@@ -298,7 +339,7 @@ async function publishToLinkedIn(ad: any) {
 	};
 }
 
-async function publishToHackerNews(ad: any) {
+async function publishToHackerNews(): Promise<PublishResult> {
 	// Simulate Hacker News posting
 	await new Promise((resolve) => setTimeout(resolve, 800));
 
@@ -309,7 +350,7 @@ async function publishToHackerNews(ad: any) {
 	};
 }
 
-async function publishToAngelList(ad: any) {
+async function publishToAngelList(): Promise<PublishResult> {
 	// Simulate AngelList API call
 	await new Promise((resolve) => setTimeout(resolve, 1200));
 
