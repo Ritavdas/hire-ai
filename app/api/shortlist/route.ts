@@ -18,6 +18,34 @@ interface ScoringWeights {
 	salary: number;
 }
 
+// Type definitions
+interface Candidate {
+	id: string;
+	name: string;
+	location?: string | null;
+	skills?: string[] | null;
+	experience_years?: number | null;
+	timezone?: string | null;
+	availability_status?: string | null;
+	preferred_salary_min?: number | null;
+	preferred_salary_max?: number | null;
+	rawText?: string | null;
+	pdfUrl?: string | null;
+}
+
+interface Job {
+	id: string;
+	title: string;
+	requirements?: string | null;
+	skills_required?: string[] | null;
+	skills_preferred?: string[] | null;
+	experience_min?: number | null;
+	experience_max?: number | null;
+	timezone_preference?: string | null;
+	salary_min?: number | null;
+	salary_max?: number | null;
+}
+
 const DEFAULT_WEIGHTS: ScoringWeights = {
 	skills: 0.4,
 	experience: 0.25,
@@ -32,22 +60,19 @@ export async function POST(request: NextRequest) {
 		const { jobId, weights = DEFAULT_WEIGHTS, limit = 10 } = body;
 
 		if (!jobId) {
-			return NextResponse.json(
-				{ error: "Missing jobId" },
-				{ status: 400 }
-			);
+			return NextResponse.json({ error: "Missing jobId" }, { status: 400 });
 		}
 
 		// Fetch job details
-		const job = await db.query.jobs.findFirst({
-			where: eq(jobs.id, jobId),
-		});
+		const jobResults = await db
+			.select()
+			.from(jobs)
+			.where(eq(jobs.id, jobId))
+			.limit(1);
+		const job = jobResults[0];
 
 		if (!job) {
-			return NextResponse.json(
-				{ error: "Job not found" },
-				{ status: 404 }
-			);
+			return NextResponse.json({ error: "Job not found" }, { status: 404 });
 		}
 
 		// Fetch all active candidates
@@ -59,7 +84,11 @@ export async function POST(request: NextRequest) {
 		// Calculate scores for each candidate
 		const scoredCandidates = await Promise.all(
 			candidates.map(async (candidate) => {
-				const scores = await calculateFitScore(candidate, job, weights);
+				const scores = await calculateFitScore(
+					candidate as Candidate,
+					job as Job,
+					weights
+				);
 				return {
 					...candidate,
 					...scores,
@@ -75,37 +104,22 @@ export async function POST(request: NextRequest) {
 		// Store scores in database for future reference
 		await Promise.all(
 			topCandidates.map(async (candidate) => {
-				await db
-					.insert(candidate_scores)
-					.values({
-						resume_id: candidate.id,
-						job_id: jobId,
-						fit_score: candidate.fit_score,
-						skill_match_score: candidate.skill_match_score,
-						experience_score: candidate.experience_score,
-						timezone_score: candidate.timezone_score,
-						availability_score: candidate.availability_score,
-						salary_score: candidate.salary_score,
-						explanation: candidate.explanation,
-					})
-					.onConflictDoUpdate({
-						target: [candidate_scores.resume_id, candidate_scores.job_id],
-						set: {
-							fit_score: candidate.fit_score,
-							skill_match_score: candidate.skill_match_score,
-							experience_score: candidate.experience_score,
-							timezone_score: candidate.timezone_score,
-							availability_score: candidate.availability_score,
-							salary_score: candidate.salary_score,
-							explanation: candidate.explanation,
-							updated_at: sql`now()`,
-						},
-					});
+				await db.insert(candidate_scores).values({
+					resume_id: candidate.id,
+					job_id: jobId,
+					fit_score: candidate.fit_score,
+					skill_match_score: candidate.skill_match_score,
+					experience_score: candidate.experience_score,
+					timezone_score: candidate.timezone_score,
+					availability_score: candidate.availability_score,
+					salary_score: candidate.salary_score,
+					explanation: candidate.explanation,
+				});
 			})
 		);
 
 		return NextResponse.json({
-			shortlist: topCandidates.map(candidate => ({
+			shortlist: topCandidates.map((candidate) => ({
 				id: candidate.id,
 				name: candidate.name,
 				location: candidate.location,
@@ -138,27 +152,27 @@ export async function POST(request: NextRequest) {
 }
 
 async function calculateFitScore(
-	candidate: any,
-	job: any,
+	candidate: Candidate,
+	job: Job,
 	weights: ScoringWeights
 ) {
 	// Skill matching using OpenAI embeddings
 	const skillScore = await calculateSkillMatch(candidate, job);
-	
+
 	// Experience scoring
 	const experienceScore = calculateExperienceScore(candidate, job);
-	
+
 	// Timezone compatibility
 	const timezoneScore = calculateTimezoneScore(candidate, job);
-	
+
 	// Availability scoring
 	const availabilityScore = calculateAvailabilityScore(candidate);
-	
+
 	// Salary compatibility
 	const salaryScore = calculateSalaryScore(candidate, job);
 
 	// Calculate composite fit score
-	const fitScore = 
+	const fitScore =
 		skillScore * weights.skills +
 		experienceScore * weights.experience +
 		timezoneScore * weights.timezone +
@@ -177,19 +191,21 @@ async function calculateFitScore(
 			score: experienceScore,
 			weight: weights.experience,
 			contribution: experienceScore * weights.experience,
-			details: `${candidate.experience_years || 0} years vs ${job.experience_min || 0}-${job.experience_max || 10} required`,
+			details: `${candidate.experience_years || 0} years vs ${
+				job.experience_min || 0
+			}-${job.experience_max || 10} required`,
 		},
 		timezone: {
 			score: timezoneScore,
 			weight: weights.timezone,
 			contribution: timezoneScore * weights.timezone,
-			details: `Timezone compatibility: ${candidate.timezone || 'Unknown'}`,
+			details: `Timezone compatibility: ${candidate.timezone || "Unknown"}`,
 		},
 		availability: {
 			score: availabilityScore,
 			weight: weights.availability,
 			contribution: availabilityScore * weights.availability,
-			details: `Status: ${candidate.availability_status || 'unknown'}`,
+			details: `Status: ${candidate.availability_status || "unknown"}`,
 		},
 		salary: {
 			score: salaryScore,
@@ -210,14 +226,17 @@ async function calculateFitScore(
 	};
 }
 
-async function calculateSkillMatch(candidate: any, job: any): Promise<number> {
+async function calculateSkillMatch(
+	candidate: Candidate,
+	job: Job
+): Promise<number> {
 	try {
 		// Use OpenAI to analyze skill match
 		const prompt = `
 		Job Requirements: ${JSON.stringify(job.skills_required || [])}
 		Job Preferred Skills: ${JSON.stringify(job.skills_preferred || [])}
 		Candidate Skills: ${JSON.stringify(candidate.skills || [])}
-		Candidate Resume Text: ${candidate.rawText.substring(0, 2000)}
+		Candidate Resume Text: ${candidate.rawText?.substring(0, 2000) || ""}
 		
 		Analyze how well this candidate's skills match the job requirements. 
 		Return a score from 0.0 to 1.0 where 1.0 is a perfect match.
@@ -229,7 +248,8 @@ async function calculateSkillMatch(candidate: any, job: any): Promise<number> {
 			messages: [
 				{
 					role: "system",
-					content: "You are an expert technical recruiter. Analyze skill matches and return only a decimal number between 0.0 and 1.0.",
+					content:
+						"You are an expert technical recruiter. Analyze skill matches and return only a decimal number between 0.0 and 1.0.",
 				},
 				{
 					role: "user",
@@ -250,36 +270,46 @@ async function calculateSkillMatch(candidate: any, job: any): Promise<number> {
 	}
 }
 
-function calculateSimpleSkillMatch(candidate: any, job: any): number {
-	const candidateSkills = (candidate.skills || []).map((s: string) => s.toLowerCase());
-	const requiredSkills = (job.skills_required || []).map((s: string) => s.toLowerCase());
-	const preferredSkills = (job.skills_preferred || []).map((s: string) => s.toLowerCase());
-	
+function calculateSimpleSkillMatch(candidate: Candidate, job: Job): number {
+	const candidateSkills = (candidate.skills || []).map((s: string) =>
+		s.toLowerCase()
+	);
+	const requiredSkills = (job.skills_required || []).map((s: string) =>
+		s.toLowerCase()
+	);
+	const preferredSkills = (job.skills_preferred || []).map((s: string) =>
+		s.toLowerCase()
+	);
+
 	let matches = 0;
-	let total = requiredSkills.length + preferredSkills.length * 0.5;
-	
+	const total = requiredSkills.length + preferredSkills.length * 0.5;
+
 	// Check required skills (weighted more heavily)
-	requiredSkills.forEach(skill => {
-		if (candidateSkills.some(cs => cs.includes(skill) || skill.includes(cs))) {
+	requiredSkills.forEach((skill) => {
+		if (
+			candidateSkills.some((cs) => cs.includes(skill) || skill.includes(cs))
+		) {
 			matches += 1;
 		}
 	});
-	
+
 	// Check preferred skills (weighted less)
-	preferredSkills.forEach(skill => {
-		if (candidateSkills.some(cs => cs.includes(skill) || skill.includes(cs))) {
+	preferredSkills.forEach((skill) => {
+		if (
+			candidateSkills.some((cs) => cs.includes(skill) || skill.includes(cs))
+		) {
 			matches += 0.5;
 		}
 	});
-	
+
 	return total > 0 ? Math.min(1, matches / total) : 0.5;
 }
 
-function calculateExperienceScore(candidate: any, job: any): number {
+function calculateExperienceScore(candidate: Candidate, job: Job): number {
 	const candidateExp = candidate.experience_years || 0;
 	const minExp = job.experience_min || 0;
 	const maxExp = job.experience_max || 20;
-	
+
 	if (candidateExp < minExp) {
 		return Math.max(0, candidateExp / minExp);
 	} else if (candidateExp > maxExp) {
@@ -289,24 +319,24 @@ function calculateExperienceScore(candidate: any, job: any): number {
 	}
 }
 
-function calculateTimezoneScore(candidate: any, job: any): number {
+function calculateTimezoneScore(candidate: Candidate, job: Job): number {
 	if (!job.timezone_preference || !candidate.timezone) {
 		return 0.5; // Neutral score if timezone info is missing
 	}
-	
+
 	// Simple timezone compatibility (can be enhanced with actual timezone logic)
 	const jobTz = job.timezone_preference.toLowerCase();
 	const candidateTz = candidate.timezone.toLowerCase();
-	
+
 	if (jobTz.includes(candidateTz) || candidateTz.includes(jobTz)) {
 		return 1.0;
 	}
-	
+
 	// Basic overlap scoring (simplified)
 	return 0.3;
 }
 
-function calculateAvailabilityScore(candidate: any): number {
+function calculateAvailabilityScore(candidate: Candidate): number {
 	switch (candidate.availability_status) {
 		case "actively_looking":
 			return 1.0;
@@ -319,23 +349,23 @@ function calculateAvailabilityScore(candidate: any): number {
 	}
 }
 
-function calculateSalaryScore(candidate: any, job: any): number {
+function calculateSalaryScore(candidate: Candidate, job: Job): number {
 	const candidateMin = candidate.preferred_salary_min;
 	const candidateMax = candidate.preferred_salary_max;
 	const jobMin = job.salary_min;
 	const jobMax = job.salary_max;
-	
+
 	if (!candidateMin || !jobMin) {
 		return 0.5; // Neutral if salary info is missing
 	}
-	
+
 	// Check for overlap
-	if (candidateMin <= jobMax && candidateMax >= jobMin) {
+	if (candidateMin <= (jobMax || 0) && (candidateMax || 0) >= (jobMin || 0)) {
 		return 1.0; // Perfect overlap
-	} else if (candidateMin > jobMax) {
+	} else if (candidateMin > (jobMax || 0)) {
 		// Candidate expects more than job offers
-		const gap = candidateMin - jobMax;
-		return Math.max(0, 1 - gap / jobMax);
+		const gap = candidateMin - (jobMax || 0);
+		return Math.max(0, 1 - gap / (jobMax || 0));
 	} else {
 		// Job offers more than candidate expects (good for employer)
 		return 0.9;

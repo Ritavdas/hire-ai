@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db/client";
-import { jobs, job_ad_templates, job_board_postings } from "@/db/schema";
+import { jobs, job_board_postings } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import OpenAI from "openai";
 
@@ -40,31 +40,28 @@ const JOB_BOARDS = {
 export async function POST(request: NextRequest) {
 	try {
 		const body = await request.json();
-		const { 
-			jobId, 
-			tone = "professional", 
-			includeDEI = true, 
-			targetBoards = ["remote_ok"], 
-			customPrompt 
+		const {
+			jobId,
+			tone = "professional",
+			includeDEI = true,
+			targetBoards = ["remote_ok"],
+			customPrompt,
 		} = body;
 
 		if (!jobId) {
-			return NextResponse.json(
-				{ error: "Missing jobId" },
-				{ status: 400 }
-			);
+			return NextResponse.json({ error: "Missing jobId" }, { status: 400 });
 		}
 
 		// Fetch job details
-		const job = await db.query.jobs.findFirst({
-			where: eq(jobs.id, jobId),
-		});
+		const jobResults = await db
+			.select()
+			.from(jobs)
+			.where(eq(jobs.id, jobId))
+			.limit(1);
+		const job = jobResults[0];
 
 		if (!job) {
-			return NextResponse.json(
-				{ error: "Job not found" },
-				{ status: 404 }
-			);
+			return NextResponse.json({ error: "Job not found" }, { status: 404 });
 		}
 
 		// Generate job ads for each target board
@@ -75,7 +72,13 @@ export async function POST(request: NextRequest) {
 					throw new Error(`Unsupported job board: ${boardKey}`);
 				}
 
-				const jobAd = await generateJobAd(job, board, tone, includeDEI, customPrompt);
+				const jobAd = await generateJobAd(
+					job,
+					board,
+					tone,
+					includeDEI,
+					customPrompt
+				);
 				return {
 					board: boardKey,
 					boardName: board.name,
@@ -118,13 +121,17 @@ export async function PUT(request: NextRequest) {
 			publishToBoards.map(async (boardKey: string) => {
 				const ad = ads.find((a: any) => a.board === boardKey);
 				if (!ad) {
-					return { board: boardKey, status: "error", message: "Ad not found" };
+					return {
+						board: boardKey,
+						status: "error",
+						message: "Ad not found",
+					};
 				}
 
 				try {
 					// Simulate publishing to job board (replace with actual API calls)
 					const result = await publishToJobBoard(boardKey, ad, jobId);
-					
+
 					// Store posting record in database
 					await db.insert(job_board_postings).values({
 						job_id: jobId,
@@ -145,7 +152,7 @@ export async function PUT(request: NextRequest) {
 					};
 				} catch (error) {
 					console.error(`Error publishing to ${boardKey}:`, error);
-					
+
 					// Store failed posting record
 					await db.insert(job_board_postings).values({
 						job_id: jobId,
@@ -156,7 +163,10 @@ export async function PUT(request: NextRequest) {
 					return {
 						board: boardKey,
 						status: "error",
-						message: error instanceof Error ? error.message : "Publishing failed",
+						message:
+							error instanceof Error
+								? error.message
+								: "Publishing failed",
 					};
 				}
 			})
@@ -183,7 +193,9 @@ async function generateJobAd(
 	includeDEI: boolean,
 	customPrompt?: string
 ) {
-	const basePrompt = customPrompt || `
+	const basePrompt =
+		customPrompt ||
+		`
 		Create a compelling job advertisement for the following position:
 		
 		Title: ${job.title}
@@ -193,7 +205,9 @@ async function generateJobAd(
 		Experience: ${job.experience_min || 0}-${job.experience_max || 10} years
 		Location: ${job.location || "Remote"}
 		Remote Friendly: ${job.remote_friendly ? "Yes" : "No"}
-		Salary Range: ${job.salary_min ? `$${job.salary_min}` : "Competitive"} - ${job.salary_max ? `$${job.salary_max}` : ""}
+		Salary Range: ${job.salary_min ? `$${job.salary_min}` : "Competitive"} - ${
+			job.salary_max ? `$${job.salary_max}` : ""
+		}
 		
 		Platform: ${board.name}
 		Tone: ${tone}
@@ -216,7 +230,8 @@ async function generateJobAd(
 		messages: [
 			{
 				role: "system",
-				content: "You are an expert job ad copywriter specializing in remote-friendly tech positions. Create engaging, inclusive job posts that attract top talent.",
+				content:
+					"You are an expert job ad copywriter specializing in remote-friendly tech positions. Create engaging, inclusive job posts that attract top talent.",
 			},
 			{
 				role: "user",
@@ -228,19 +243,20 @@ async function generateJobAd(
 	});
 
 	const result = JSON.parse(completion.choices[0].message.content || "{}");
-	
+
 	// Ensure we have all required fields
 	return {
 		title: result.title || job.title,
 		content: result.content || job.description,
 		tags: result.tags || board.tags.slice(0, 3),
-		estimatedReach: result.estimatedReach || Math.floor(Math.random() * 10000) + 1000,
+		estimatedReach:
+			result.estimatedReach || Math.floor(Math.random() * 10000) + 1000,
 	};
 }
 
 async function publishToJobBoard(boardKey: string, ad: any, jobId: string) {
 	// This is a simulation - replace with actual job board API integrations
-	
+
 	switch (boardKey) {
 		case "remote_ok":
 			return await publishToRemoteOK(ad);
@@ -260,19 +276,21 @@ async function publishToJobBoard(boardKey: string, ad: any, jobId: string) {
 
 async function publishToRemoteOK(ad: any) {
 	// Simulate Remote OK API call
-	await new Promise(resolve => setTimeout(resolve, 1000));
-	
+	await new Promise((resolve) => setTimeout(resolve, 1000));
+
 	return {
 		postId: `ro_${Date.now()}`,
-		url: `https://remoteok.io/remote-jobs/${ad.title.toLowerCase().replace(/\s+/g, '-')}`,
+		url: `https://remoteok.io/remote-jobs/${ad.title
+			.toLowerCase()
+			.replace(/\s+/g, "-")}`,
 		expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
 	};
 }
 
 async function publishToLinkedIn(ad: any) {
 	// Simulate LinkedIn API call
-	await new Promise(resolve => setTimeout(resolve, 1500));
-	
+	await new Promise((resolve) => setTimeout(resolve, 1500));
+
 	return {
 		postId: `li_${Date.now()}`,
 		url: `https://linkedin.com/jobs/view/${Date.now()}`,
@@ -282,8 +300,8 @@ async function publishToLinkedIn(ad: any) {
 
 async function publishToHackerNews(ad: any) {
 	// Simulate Hacker News posting
-	await new Promise(resolve => setTimeout(resolve, 800));
-	
+	await new Promise((resolve) => setTimeout(resolve, 800));
+
 	return {
 		postId: `hn_${Date.now()}`,
 		url: `https://news.ycombinator.com/item?id=${Date.now()}`,
@@ -293,8 +311,8 @@ async function publishToHackerNews(ad: any) {
 
 async function publishToAngelList(ad: any) {
 	// Simulate AngelList API call
-	await new Promise(resolve => setTimeout(resolve, 1200));
-	
+	await new Promise((resolve) => setTimeout(resolve, 1200));
+
 	return {
 		postId: `al_${Date.now()}`,
 		url: `https://angel.co/company/jobs/${Date.now()}`,
