@@ -43,6 +43,7 @@ export default function JobsPage() {
 	const [error, setError] = useState<string | null>(null);
 
 	useEffect(() => {
+		console.log("fetching jobs");
 		fetchJobs();
 	}, []);
 
