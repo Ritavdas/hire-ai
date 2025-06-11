@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
 		}
 
 		// Fetch assessment results with badge information
-		let query = db
+		const query = db
 			.select({
 				id: assessment_results.id,
 				assessment_name: assessments.name,
@@ -30,7 +30,10 @@ export async function GET(request: NextRequest) {
 				taken_at: assessment_results.taken_at,
 			})
 			.from(assessment_results)
-			.innerJoin(assessments, eq(assessment_results.assessment_id, assessments.id))
+			.innerJoin(
+				assessments,
+				eq(assessment_results.assessment_id, assessments.id)
+			)
 			.where(
 				and(
 					eq(assessment_results.resume_id, resumeId),
@@ -42,21 +45,27 @@ export async function GET(request: NextRequest) {
 		const results = await query;
 
 		// Filter out expired badges if not requested
-		const badges = includeExpired 
-			? results 
-			: results.filter(badge => 
-				badge.badge_expires_at && new Date(badge.badge_expires_at) > new Date()
-			);
+		const badges = includeExpired
+			? results
+			: results.filter(
+					(badge) =>
+						badge.badge_expires_at &&
+						new Date(badge.badge_expires_at) > new Date()
+			  );
 
 		return NextResponse.json({
 			badges,
 			summary: {
 				total: badges.length,
-				active: badges.filter(badge => 
-					badge.badge_expires_at && new Date(badge.badge_expires_at) > new Date()
+				active: badges.filter(
+					(badge) =>
+						badge.badge_expires_at &&
+						new Date(badge.badge_expires_at) > new Date()
 				).length,
-				expired: badges.filter(badge => 
-					badge.badge_expires_at && new Date(badge.badge_expires_at) <= new Date()
+				expired: badges.filter(
+					(badge) =>
+						badge.badge_expires_at &&
+						new Date(badge.badge_expires_at) <= new Date()
 				).length,
 			},
 		});
@@ -76,12 +85,27 @@ export async function POST(request: NextRequest) {
 
 		if (action === "verify") {
 			// Verify badge authenticity
-			const badge = await db.query.assessment_results.findFirst({
-				where: eq(assessment_results.id, badgeId),
-				with: {
-					assessment: true,
-				},
-			});
+			const badgeResults = await db
+				.select({
+					id: assessment_results.id,
+					assessment_name: assessments.name,
+					skill_category: assessments.skill_category,
+					difficulty_level: assessments.difficulty_level,
+					score: assessment_results.score,
+					percentile: assessment_results.percentile,
+					badge_earned: assessment_results.badge_earned,
+					badge_expires_at: assessment_results.badge_expires_at,
+					taken_at: assessment_results.taken_at,
+				})
+				.from(assessment_results)
+				.innerJoin(
+					assessments,
+					eq(assessment_results.assessment_id, assessments.id)
+				)
+				.where(eq(assessment_results.id, badgeId))
+				.limit(1);
+
+			const badge = badgeResults[0];
 
 			if (!badge) {
 				return NextResponse.json(
@@ -91,14 +115,16 @@ export async function POST(request: NextRequest) {
 			}
 
 			// Check if badge is still valid
-			const isValid = badge.badge_expires_at && new Date(badge.badge_expires_at) > new Date();
-			
+			const isValid =
+				badge.badge_expires_at &&
+				new Date(badge.badge_expires_at) > new Date();
+
 			return NextResponse.json({
 				valid: isValid,
 				badge: {
 					id: badge.id,
-					skill_category: badge.assessment.skill_category,
-					difficulty_level: badge.assessment.difficulty_level,
+					skill_category: badge.skill_category,
+					difficulty_level: badge.difficulty_level,
 					score: badge.score,
 					percentile: badge.percentile,
 					taken_at: badge.taken_at,
@@ -111,10 +137,7 @@ export async function POST(request: NextRequest) {
 			});
 		}
 
-		return NextResponse.json(
-			{ error: "Invalid action" },
-			{ status: 400 }
-		);
+		return NextResponse.json({ error: "Invalid action" }, { status: 400 });
 	} catch (error) {
 		console.error("Error processing badge request:", error);
 		return NextResponse.json(

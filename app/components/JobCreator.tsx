@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React, { useState } from "react";
@@ -24,11 +26,15 @@ interface JobFormData {
 }
 
 interface JobCreatorProps {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	onJobCreated?: (job: any) => void;
 	onCancel?: () => void;
 }
 
-export default function JobCreator({ onJobCreated, onCancel }: JobCreatorProps) {
+export default function JobCreator({
+	onJobCreated,
+	onCancel,
+}: JobCreatorProps) {
 	const [formData, setFormData] = useState<JobFormData>({
 		title: "",
 		description: "",
@@ -57,42 +63,44 @@ export default function JobCreator({ onJobCreated, onCancel }: JobCreatorProps) 
 	const [newNiceToHave, setNewNiceToHave] = useState("");
 
 	const handleInputChange = (field: keyof JobFormData, value: any) => {
-		setFormData(prev => ({
+		setFormData((prev) => ({
 			...prev,
 			[field]: value,
 		}));
 	};
 
-	const addSkill = (type: 'required' | 'preferred') => {
-		const skill = type === 'required' ? newRequiredSkill : newPreferredSkill;
+	const addSkill = (type: "required" | "preferred") => {
+		const skill = type === "required" ? newRequiredSkill : newPreferredSkill;
 		if (!skill.trim()) return;
 
-		const field = type === 'required' ? 'skills_required' : 'skills_preferred';
-		setFormData(prev => ({
+		const field =
+			type === "required" ? "skills_required" : "skills_preferred";
+		setFormData((prev) => ({
 			...prev,
 			[field]: [...prev[field], skill.trim()],
 		}));
 
-		if (type === 'required') {
+		if (type === "required") {
 			setNewRequiredSkill("");
 		} else {
 			setNewPreferredSkill("");
 		}
 	};
 
-	const removeSkill = (type: 'required' | 'preferred', index: number) => {
-		const field = type === 'required' ? 'skills_required' : 'skills_preferred';
-		setFormData(prev => ({
+	const removeSkill = (type: "required" | "preferred", index: number) => {
+		const field =
+			type === "required" ? "skills_required" : "skills_preferred";
+		setFormData((prev) => ({
 			...prev,
 			[field]: prev[field].filter((_, i) => i !== index),
 		}));
 	};
 
-	const addRequirement = (type: 'must_have' | 'nice_to_have') => {
-		const requirement = type === 'must_have' ? newMustHave : newNiceToHave;
+	const addRequirement = (type: "must_have" | "nice_to_have") => {
+		const requirement = type === "must_have" ? newMustHave : newNiceToHave;
 		if (!requirement.trim()) return;
 
-		setFormData(prev => ({
+		setFormData((prev) => ({
 			...prev,
 			requirements: {
 				...prev.requirements,
@@ -100,15 +108,18 @@ export default function JobCreator({ onJobCreated, onCancel }: JobCreatorProps) 
 			},
 		}));
 
-		if (type === 'must_have') {
+		if (type === "must_have") {
 			setNewMustHave("");
 		} else {
 			setNewNiceToHave("");
 		}
 	};
 
-	const removeRequirement = (type: 'must_have' | 'nice_to_have', index: number) => {
-		setFormData(prev => ({
+	const removeRequirement = (
+		type: "must_have" | "nice_to_have",
+		index: number
+	) => {
+		setFormData((prev) => ({
 			...prev,
 			requirements: {
 				...prev.requirements,
@@ -156,8 +167,12 @@ export default function JobCreator({ onJobCreated, onCancel }: JobCreatorProps) 
 						<BriefcaseIcon className="text-white" size={20} />
 					</div>
 					<div>
-						<h2 className="text-xl font-bold text-gray-900">Create New Job</h2>
-						<p className="text-sm text-gray-600">Define requirements for AI-powered candidate matching</p>
+						<h2 className="text-xl font-bold text-gray-900">
+							Create New Job
+						</h2>
+						<p className="text-sm text-gray-600">
+							Define requirements for AI-powered candidate matching
+						</p>
 					</div>
 				</div>
 			</div>
@@ -172,7 +187,9 @@ export default function JobCreator({ onJobCreated, onCancel }: JobCreatorProps) 
 						<input
 							type="text"
 							value={formData.title}
-							onChange={(e) => handleInputChange('title', e.target.value)}
+							onChange={(e) =>
+								handleInputChange("title", e.target.value)
+							}
 							className="input-primary"
 							placeholder="e.g., Senior React Developer"
 							required
@@ -184,11 +201,16 @@ export default function JobCreator({ onJobCreated, onCancel }: JobCreatorProps) 
 							Location
 						</label>
 						<div className="relative">
-							<LocationIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+							<LocationIcon
+								className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+								size={16}
+							/>
 							<input
 								type="text"
 								value={formData.location}
-								onChange={(e) => handleInputChange('location', e.target.value)}
+								onChange={(e) =>
+									handleInputChange("location", e.target.value)
+								}
 								className="input-primary pl-10"
 								placeholder="e.g., San Francisco, CA"
 							/>
@@ -203,7 +225,9 @@ export default function JobCreator({ onJobCreated, onCancel }: JobCreatorProps) 
 					</label>
 					<textarea
 						value={formData.description}
-						onChange={(e) => handleInputChange('description', e.target.value)}
+						onChange={(e) =>
+							handleInputChange("description", e.target.value)
+						}
 						className="input-primary h-32 resize-none"
 						placeholder="Describe the role, responsibilities, and what makes this opportunity exciting..."
 						required
@@ -216,10 +240,15 @@ export default function JobCreator({ onJobCreated, onCancel }: JobCreatorProps) 
 						type="checkbox"
 						id="remote_friendly"
 						checked={formData.remote_friendly}
-						onChange={(e) => handleInputChange('remote_friendly', e.target.checked)}
+						onChange={(e) =>
+							handleInputChange("remote_friendly", e.target.checked)
+						}
 						className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
 					/>
-					<label htmlFor="remote_friendly" className="text-sm font-medium text-gray-700">
+					<label
+						htmlFor="remote_friendly"
+						className="text-sm font-medium text-gray-700"
+					>
 						Remote-friendly position
 					</label>
 				</div>
@@ -231,21 +260,37 @@ export default function JobCreator({ onJobCreated, onCancel }: JobCreatorProps) 
 					</label>
 					<div className="grid grid-cols-2 gap-4">
 						<div className="relative">
-							<DollarSignIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+							<DollarSignIcon
+								className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+								size={16}
+							/>
 							<input
 								type="number"
 								value={formData.salary_min || ""}
-								onChange={(e) => handleInputChange('salary_min', e.target.value ? parseInt(e.target.value) : null)}
+								onChange={(e) =>
+									handleInputChange(
+										"salary_min",
+										e.target.value ? parseInt(e.target.value) : null
+									)
+								}
 								className="input-primary pl-10"
 								placeholder="Min salary"
 							/>
 						</div>
 						<div className="relative">
-							<DollarSignIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+							<DollarSignIcon
+								className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+								size={16}
+							/>
 							<input
 								type="number"
 								value={formData.salary_max || ""}
-								onChange={(e) => handleInputChange('salary_max', e.target.value ? parseInt(e.target.value) : null)}
+								onChange={(e) =>
+									handleInputChange(
+										"salary_max",
+										e.target.value ? parseInt(e.target.value) : null
+									)
+								}
 								className="input-primary pl-10"
 								placeholder="Max salary"
 							/>
@@ -262,7 +307,12 @@ export default function JobCreator({ onJobCreated, onCancel }: JobCreatorProps) 
 						<input
 							type="number"
 							value={formData.experience_min || ""}
-							onChange={(e) => handleInputChange('experience_min', e.target.value ? parseInt(e.target.value) : null)}
+							onChange={(e) =>
+								handleInputChange(
+									"experience_min",
+									e.target.value ? parseInt(e.target.value) : null
+								)
+							}
 							className="input-primary"
 							placeholder="Min years"
 							min="0"
@@ -270,7 +320,12 @@ export default function JobCreator({ onJobCreated, onCancel }: JobCreatorProps) 
 						<input
 							type="number"
 							value={formData.experience_max || ""}
-							onChange={(e) => handleInputChange('experience_max', e.target.value ? parseInt(e.target.value) : null)}
+							onChange={(e) =>
+								handleInputChange(
+									"experience_max",
+									e.target.value ? parseInt(e.target.value) : null
+								)
+							}
 							className="input-primary"
 							placeholder="Max years"
 							min="0"
@@ -290,11 +345,14 @@ export default function JobCreator({ onJobCreated, onCancel }: JobCreatorProps) 
 							onChange={(e) => setNewRequiredSkill(e.target.value)}
 							className="input-primary flex-1"
 							placeholder="Add a required skill..."
-							onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addSkill('required'))}
+							onKeyPress={(e) =>
+								e.key === "Enter" &&
+								(e.preventDefault(), addSkill("required"))
+							}
 						/>
 						<button
 							type="button"
-							onClick={() => addSkill('required')}
+							onClick={() => addSkill("required")}
 							className="btn-secondary"
 						>
 							<PlusIcon size={16} />
@@ -309,7 +367,7 @@ export default function JobCreator({ onJobCreated, onCancel }: JobCreatorProps) 
 								<span>{skill}</span>
 								<button
 									type="button"
-									onClick={() => removeSkill('required', index)}
+									onClick={() => removeSkill("required", index)}
 									className="text-blue-600 hover:text-blue-800"
 								>
 									×
@@ -331,11 +389,14 @@ export default function JobCreator({ onJobCreated, onCancel }: JobCreatorProps) 
 							onChange={(e) => setNewPreferredSkill(e.target.value)}
 							className="input-primary flex-1"
 							placeholder="Add a preferred skill..."
-							onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addSkill('preferred'))}
+							onKeyPress={(e) =>
+								e.key === "Enter" &&
+								(e.preventDefault(), addSkill("preferred"))
+							}
 						/>
 						<button
 							type="button"
-							onClick={() => addSkill('preferred')}
+							onClick={() => addSkill("preferred")}
 							className="btn-secondary"
 						>
 							<PlusIcon size={16} />
@@ -350,7 +411,7 @@ export default function JobCreator({ onJobCreated, onCancel }: JobCreatorProps) 
 								<span>{skill}</span>
 								<button
 									type="button"
-									onClick={() => removeSkill('preferred', index)}
+									onClick={() => removeSkill("preferred", index)}
 									className="text-yellow-600 hover:text-yellow-800"
 								>
 									×

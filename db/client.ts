@@ -1,6 +1,6 @@
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
-import { resumes } from "./schema";
+import * as schema from "./schema";
 
 if (!process.env.SUPABASE_DATABASE_URL) {
 	throw new Error("SUPABASE_DATABASE_URL environment variable is required");
@@ -14,4 +14,4 @@ const pool = new Pool({
 			: { rejectUnauthorized: false },
 });
 
-export const db = drizzle(pool, { schema: { resumes } });
+export const db = drizzle(pool, { schema });

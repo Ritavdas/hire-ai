@@ -1,14 +1,14 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { 
-	ClockIcon, 
-	CheckIcon, 
-	XMarkIcon, 
+import {
+	ClockIcon,
+	CheckIcon,
 	CodeBracketIcon,
 	AcademicCapIcon,
 	TrophyIcon,
-	PlayIcon
+	PlayIcon,
 } from "./icons";
 
 interface Question {
@@ -42,11 +42,11 @@ interface SkillAssessmentProps {
 	onCancel?: () => void;
 }
 
-export default function SkillAssessment({ 
-	assessmentId, 
-	resumeId, 
-	onComplete, 
-	onCancel 
+export default function SkillAssessment({
+	assessmentId,
+	resumeId,
+	onComplete,
+	onCancel,
 }: SkillAssessmentProps) {
 	const [assessment, setAssessment] = useState<Assessment | null>(null);
 	const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -66,7 +66,7 @@ export default function SkillAssessment({
 		let timer: NodeJS.Timeout;
 		if (isStarted && timeRemaining > 0) {
 			timer = setInterval(() => {
-				setTimeRemaining(prev => {
+				setTimeRemaining((prev) => {
 					if (prev <= 1) {
 						handleSubmit(); // Auto-submit when time runs out
 						return 0;
@@ -82,11 +82,12 @@ export default function SkillAssessment({
 		try {
 			const response = await fetch(`/api/assessments?id=${assessmentId}`);
 			if (!response.ok) throw new Error("Failed to fetch assessment");
-			
+
 			const data = await response.json();
 			setAssessment(data.assessment);
 			setAnswers(new Array(data.assessment.questions.length).fill({}));
 		} catch (err) {
+			console.error("Error fetching assessment:", err);
 			setError("Failed to load assessment");
 		}
 	};
@@ -98,7 +99,7 @@ export default function SkillAssessment({
 	};
 
 	const handleAnswerChange = (questionIndex: number, answer: any) => {
-		setAnswers(prev => {
+		setAnswers((prev) => {
 			const newAnswers = [...prev];
 			newAnswers[questionIndex] = answer;
 			return newAnswers;
@@ -107,9 +108,10 @@ export default function SkillAssessment({
 
 	const handleSubmit = async () => {
 		if (!assessment) return;
-		
+
 		setIsSubmitting(true);
-		const timeSpent = assessment.duration_minutes - Math.floor(timeRemaining / 60);
+		const timeSpent =
+			assessment.duration_minutes - Math.floor(timeRemaining / 60);
 
 		try {
 			const response = await fetch("/api/assessments", {
@@ -126,10 +128,11 @@ export default function SkillAssessment({
 			});
 
 			if (!response.ok) throw new Error("Failed to submit assessment");
-			
+
 			const result = await response.json();
 			onComplete?.(result);
 		} catch (err) {
+			console.error("Error submitting assessment:", err);
 			setError("Failed to submit assessment");
 		} finally {
 			setIsSubmitting(false);
@@ -139,16 +142,21 @@ export default function SkillAssessment({
 	const formatTime = (seconds: number) => {
 		const mins = Math.floor(seconds / 60);
 		const secs = seconds % 60;
-		return `${mins}:${secs.toString().padStart(2, '0')}`;
+		return `${mins}:${secs.toString().padStart(2, "0")}`;
 	};
 
 	const getDifficultyColor = (level: string) => {
 		switch (level) {
-			case "beginner": return "bg-green-100 text-green-800";
-			case "intermediate": return "bg-yellow-100 text-yellow-800";
-			case "advanced": return "bg-orange-100 text-orange-800";
-			case "expert": return "bg-red-100 text-red-800";
-			default: return "bg-gray-100 text-gray-800";
+			case "beginner":
+				return "bg-green-100 text-green-800";
+			case "intermediate":
+				return "bg-yellow-100 text-yellow-800";
+			case "advanced":
+				return "bg-orange-100 text-orange-800";
+			case "expert":
+				return "bg-red-100 text-red-800";
+			default:
+				return "bg-gray-100 text-gray-800";
 		}
 	};
 
@@ -172,8 +180,12 @@ export default function SkillAssessment({
 							<AcademicCapIcon className="text-white" size={24} />
 						</div>
 						<div>
-							<h2 className="text-xl font-bold text-gray-900">{assessment.name}</h2>
-							<p className="text-sm text-gray-600">{assessment.description}</p>
+							<h2 className="text-xl font-bold text-gray-900">
+								{assessment.name}
+							</h2>
+							<p className="text-sm text-gray-600">
+								{assessment.description}
+							</p>
 						</div>
 					</div>
 				</div>
@@ -182,21 +194,30 @@ export default function SkillAssessment({
 					{/* Assessment Details */}
 					<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 						<div className="text-center p-4 bg-gray-50 rounded-lg">
-							<ClockIcon className="mx-auto text-gray-600 mb-2" size={24} />
+							<ClockIcon
+								className="mx-auto text-gray-600 mb-2"
+								size={24}
+							/>
 							<div className="text-lg font-semibold text-gray-900">
 								{assessment.duration_minutes} min
 							</div>
 							<div className="text-sm text-gray-600">Duration</div>
 						</div>
 						<div className="text-center p-4 bg-gray-50 rounded-lg">
-							<CodeBracketIcon className="mx-auto text-gray-600 mb-2" size={24} />
+							<CodeBracketIcon
+								className="mx-auto text-gray-600 mb-2"
+								size={24}
+							/>
 							<div className="text-lg font-semibold text-gray-900">
 								{assessment.questions.length}
 							</div>
 							<div className="text-sm text-gray-600">Questions</div>
 						</div>
 						<div className="text-center p-4 bg-gray-50 rounded-lg">
-							<TrophyIcon className="mx-auto text-gray-600 mb-2" size={24} />
+							<TrophyIcon
+								className="mx-auto text-gray-600 mb-2"
+								size={24}
+							/>
 							<div className="text-lg font-semibold text-gray-900">
 								{assessment.passing_score}%
 							</div>
@@ -206,20 +227,39 @@ export default function SkillAssessment({
 
 					{/* Difficulty Badge */}
 					<div className="flex justify-center">
-						<span className={`badge ${getDifficultyColor(assessment.difficulty_level)} text-sm px-4 py-2`}>
-							{assessment.difficulty_level.charAt(0).toUpperCase() + assessment.difficulty_level.slice(1)} Level
+						<span
+							className={`badge ${getDifficultyColor(
+								assessment.difficulty_level
+							)} text-sm px-4 py-2`}
+						>
+							{assessment.difficulty_level.charAt(0).toUpperCase() +
+								assessment.difficulty_level.slice(1)}{" "}
+							Level
 						</span>
 					</div>
 
 					{/* Instructions */}
 					<div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-						<h3 className="font-semibold text-blue-900 mb-2">Instructions</h3>
+						<h3 className="font-semibold text-blue-900 mb-2">
+							Instructions
+						</h3>
 						<ul className="text-sm text-blue-800 space-y-1">
-							<li>• You have {assessment.duration_minutes} minutes to complete the assessment</li>
+							<li>
+								• You have {assessment.duration_minutes} minutes to
+								complete the assessment
+							</li>
 							<li>• Answer all questions to the best of your ability</li>
-							<li>• You can navigate between questions but cannot pause the timer</li>
-							<li>• Your assessment will auto-submit when time expires</li>
-							<li>• Achieve {assessment.passing_score}% or higher to earn a verified badge</li>
+							<li>
+								• You can navigate between questions but cannot pause
+								the timer
+							</li>
+							<li>
+								• Your assessment will auto-submit when time expires
+							</li>
+							<li>
+								• Achieve {assessment.passing_score}% or higher to earn
+								a verified badge
+							</li>
 						</ul>
 					</div>
 
@@ -230,7 +270,10 @@ export default function SkillAssessment({
 								Cancel
 							</button>
 						)}
-						<button onClick={startAssessment} className="btn-primary ml-auto">
+						<button
+							onClick={startAssessment}
+							className="btn-primary ml-auto"
+						>
 							<PlayIcon className="mr-2" size={16} />
 							Start Assessment
 						</button>
@@ -250,15 +293,22 @@ export default function SkillAssessment({
 				<div className="card-body">
 					<div className="flex items-center justify-between">
 						<div>
-							<h2 className="text-lg font-semibold text-gray-900">{assessment.name}</h2>
+							<h2 className="text-lg font-semibold text-gray-900">
+								{assessment.name}
+							</h2>
 							<p className="text-sm text-gray-600">
-								Question {currentQuestion + 1} of {assessment.questions.length}
+								Question {currentQuestion + 1} of{" "}
+								{assessment.questions.length}
 							</p>
 						</div>
 						<div className="flex items-center space-x-4">
-							<div className={`flex items-center space-x-2 px-3 py-2 rounded-lg ${
-								timeRemaining < 300 ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'
-							}`}>
+							<div
+								className={`flex items-center space-x-2 px-3 py-2 rounded-lg ${
+									timeRemaining < 300
+										? "bg-red-100 text-red-800"
+										: "bg-blue-100 text-blue-800"
+								}`}
+							>
 								<ClockIcon size={16} />
 								<span className="font-mono font-semibold">
 									{formatTime(timeRemaining)}
@@ -272,7 +322,13 @@ export default function SkillAssessment({
 						<div className="w-full bg-gray-200 rounded-full h-2">
 							<div
 								className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-								style={{ width: `${((currentQuestion + 1) / assessment.questions.length) * 100}%` }}
+								style={{
+									width: `${
+										((currentQuestion + 1) /
+											assessment.questions.length) *
+										100
+									}%`,
+								}}
 							></div>
 						</div>
 					</div>
@@ -291,20 +347,29 @@ export default function SkillAssessment({
 								{question.points} points
 							</span>
 						</div>
-						<p className="text-gray-800 leading-relaxed">{question.question}</p>
+						<p className="text-gray-800 leading-relaxed">
+							{question.question}
+						</p>
 					</div>
 
 					{/* Question Content Based on Type */}
 					{question.type === "multiple_choice" && (
 						<div className="space-y-3">
 							{question.options?.map((option, index) => (
-								<label key={index} className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+								<label
+									key={index}
+									className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer"
+								>
 									<input
 										type="radio"
 										name={`question-${currentQuestion}`}
 										value={index}
 										checked={answer.selected === index}
-										onChange={(e) => handleAnswerChange(currentQuestion, { selected: parseInt(e.target.value) })}
+										onChange={(e) =>
+											handleAnswerChange(currentQuestion, {
+												selected: parseInt(e.target.value),
+											})
+										}
 										className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
 									/>
 									<span className="text-gray-800">{option}</span>
@@ -313,16 +378,23 @@ export default function SkillAssessment({
 						</div>
 					)}
 
-					{(question.type === "code_completion" || question.type === "coding_challenge") && (
+					{(question.type === "code_completion" ||
+						question.type === "coding_challenge") && (
 						<div className="space-y-4">
 							{question.function_signature && (
 								<div className="bg-gray-100 p-3 rounded-lg">
-									<code className="text-sm text-gray-800">{question.function_signature}</code>
+									<code className="text-sm text-gray-800">
+										{question.function_signature}
+									</code>
 								</div>
 							)}
 							<textarea
 								value={answer.code || question.code_template || ""}
-								onChange={(e) => handleAnswerChange(currentQuestion, { code: e.target.value })}
+								onChange={(e) =>
+									handleAnswerChange(currentQuestion, {
+										code: e.target.value,
+									})
+								}
 								className="input-primary h-48 font-mono text-sm"
 								placeholder="Write your code here..."
 							/>
@@ -336,7 +408,9 @@ export default function SkillAssessment({
 									Buggy Code:
 								</label>
 								<div className="bg-red-50 border border-red-200 p-3 rounded-lg">
-									<pre className="text-sm text-gray-800">{question.buggy_code}</pre>
+									<pre className="text-sm text-gray-800">
+										{question.buggy_code}
+									</pre>
 								</div>
 							</div>
 							<div>
@@ -345,7 +419,11 @@ export default function SkillAssessment({
 								</label>
 								<textarea
 									value={answer.code || ""}
-									onChange={(e) => handleAnswerChange(currentQuestion, { code: e.target.value })}
+									onChange={(e) =>
+										handleAnswerChange(currentQuestion, {
+											code: e.target.value,
+										})
+									}
 									className="input-primary h-32 font-mono text-sm"
 									placeholder="Provide the corrected code..."
 								/>
@@ -357,17 +435,25 @@ export default function SkillAssessment({
 						<div className="space-y-4">
 							{question.evaluation_criteria && (
 								<div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
-									<h4 className="font-medium text-blue-900 mb-2">Consider these aspects:</h4>
+									<h4 className="font-medium text-blue-900 mb-2">
+										Consider these aspects:
+									</h4>
 									<ul className="text-sm text-blue-800 space-y-1">
-										{question.evaluation_criteria.map((criterion, index) => (
-											<li key={index}>• {criterion}</li>
-										))}
+										{question.evaluation_criteria.map(
+											(criterion, index) => (
+												<li key={index}>• {criterion}</li>
+											)
+										)}
 									</ul>
 								</div>
 							)}
 							<textarea
 								value={answer.text || ""}
-								onChange={(e) => handleAnswerChange(currentQuestion, { text: e.target.value })}
+								onChange={(e) =>
+									handleAnswerChange(currentQuestion, {
+										text: e.target.value,
+									})
+								}
 								className="input-primary h-64"
 								placeholder="Describe your system design approach..."
 							/>
@@ -381,7 +467,9 @@ export default function SkillAssessment({
 				<div className="card-body">
 					<div className="flex items-center justify-between">
 						<button
-							onClick={() => setCurrentQuestion(Math.max(0, currentQuestion - 1))}
+							onClick={() =>
+								setCurrentQuestion(Math.max(0, currentQuestion - 1))
+							}
 							disabled={currentQuestion === 0}
 							className="btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
 						>
@@ -396,7 +484,8 @@ export default function SkillAssessment({
 									className={`w-8 h-8 rounded-full text-sm font-medium transition-colors ${
 										index === currentQuestion
 											? "bg-blue-600 text-white"
-											: answers[index] && Object.keys(answers[index]).length > 0
+											: answers[index] &&
+											  Object.keys(answers[index]).length > 0
 											? "bg-green-100 text-green-800"
 											: "bg-gray-100 text-gray-600 hover:bg-gray-200"
 									}`}
@@ -426,7 +515,14 @@ export default function SkillAssessment({
 							</button>
 						) : (
 							<button
-								onClick={() => setCurrentQuestion(Math.min(assessment.questions.length - 1, currentQuestion + 1))}
+								onClick={() =>
+									setCurrentQuestion(
+										Math.min(
+											assessment.questions.length - 1,
+											currentQuestion + 1
+										)
+									)
+								}
 								className="btn-primary"
 							>
 								Next

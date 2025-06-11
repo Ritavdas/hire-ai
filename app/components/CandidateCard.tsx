@@ -13,7 +13,6 @@ import {
 	LocationIcon,
 	UserIcon,
 	StarIcon,
-	ClockIcon,
 } from "./icons";
 
 type CandidateCardProps = {

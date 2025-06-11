@@ -1,14 +1,13 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { 
-	ClockIcon, 
-	CheckIcon, 
-	XMarkIcon,
+import {
+	ClockIcon,
+	CheckIcon,
 	GlobeAltIcon,
 	CalendarIcon,
 	DollarSignIcon,
-	UserIcon
+	UserIcon,
 } from "./icons";
 
 interface AvailabilityWidgetProps {
@@ -52,7 +51,7 @@ const AVAILABILITY_OPTIONS = [
 
 const TIMEZONE_OPTIONS = [
 	"America/New_York",
-	"America/Chicago", 
+	"America/Chicago",
 	"America/Denver",
 	"America/Los_Angeles",
 	"Europe/London",
@@ -64,12 +63,12 @@ const TIMEZONE_OPTIONS = [
 	"Australia/Sydney",
 ];
 
-export default function AvailabilityWidget({ 
-	resumeId, 
+export default function AvailabilityWidget({
+	resumeId,
 	currentStatus = "unknown",
 	currentTimezone,
 	isCandidate = false,
-	onStatusUpdate 
+	onStatusUpdate,
 }: AvailabilityWidgetProps) {
 	const [status, setStatus] = useState(currentStatus);
 	const [timezone, setTimezone] = useState(currentTimezone || "");
@@ -108,7 +107,8 @@ export default function AvailabilityWidget({
 				throw new Error("Failed to update availability");
 			}
 
-			const data = await response.json();
+			// eslint-disable-next-line @typescript-eslint/no-unused-vars
+			await response.json();
 			setLastUpdated(new Date());
 			setIsEditing(false);
 			onStatusUpdate?.(status);
@@ -130,22 +130,25 @@ export default function AvailabilityWidget({
 	};
 
 	const getCurrentOption = () => {
-		return AVAILABILITY_OPTIONS.find(option => option.value === status) || AVAILABILITY_OPTIONS[3];
+		return (
+			AVAILABILITY_OPTIONS.find((option) => option.value === status) ||
+			AVAILABILITY_OPTIONS[3]
+		);
 	};
 
 	const getStatusAge = () => {
 		if (!lastUpdated) return "";
-		
+
 		const now = new Date();
 		const diffTime = now.getTime() - lastUpdated.getTime();
 		const diffMinutes = Math.floor(diffTime / (1000 * 60));
-		
+
 		if (diffMinutes < 1) return "Just now";
 		if (diffMinutes < 60) return `${diffMinutes}m ago`;
-		
+
 		const diffHours = Math.floor(diffMinutes / 60);
 		if (diffHours < 24) return `${diffHours}h ago`;
-		
+
 		const diffDays = Math.floor(diffHours / 24);
 		return `${diffDays}d ago`;
 	};
@@ -153,28 +156,38 @@ export default function AvailabilityWidget({
 	if (!isCandidate && !isEditing) {
 		// Read-only view for recruiters
 		const currentOption = getCurrentOption();
-		
+
 		return (
 			<div className="space-y-3">
 				<div className="flex items-center justify-between">
-					<h4 className="text-sm font-semibold text-gray-700">Availability Status</h4>
+					<h4 className="text-sm font-semibold text-gray-700">
+						Availability Status
+					</h4>
 					{lastUpdated && (
-						<span className="text-xs text-gray-500">{getStatusAge()}</span>
+						<span className="text-xs text-gray-500">
+							{getStatusAge()}
+						</span>
 					)}
 				</div>
-				
-				<div className={`inline-flex items-center space-x-2 px-3 py-2 rounded-lg border ${currentOption.color}`}>
+
+				<div
+					className={`inline-flex items-center space-x-2 px-3 py-2 rounded-lg border ${currentOption.color}`}
+				>
 					<span className="text-sm">{currentOption.icon}</span>
 					<div>
-						<div className="font-medium text-sm">{currentOption.label}</div>
-						<div className="text-xs opacity-75">{currentOption.description}</div>
+						<div className="font-medium text-sm">
+							{currentOption.label}
+						</div>
+						<div className="text-xs opacity-75">
+							{currentOption.description}
+						</div>
 					</div>
 				</div>
 
 				{timezone && (
 					<div className="flex items-center space-x-2 text-sm text-gray-600">
 						<GlobeAltIcon size={14} />
-						<span>{timezone.replace('_', ' ')}</span>
+						<span>{timezone.replace("_", " ")}</span>
 					</div>
 				)}
 			</div>
@@ -188,7 +201,9 @@ export default function AvailabilityWidget({
 				<div className="flex items-center space-x-2">
 					<UserIcon className="text-gray-600" size={16} />
 					<h4 className="text-sm font-semibold text-gray-700">
-						{isCandidate ? "Update Your Availability" : "Availability Status"}
+						{isCandidate
+							? "Update Your Availability"
+							: "Availability Status"}
 					</h4>
 				</div>
 				{!isEditing && isCandidate && (
@@ -210,7 +225,10 @@ export default function AvailabilityWidget({
 						</label>
 						<div className="space-y-2">
 							{AVAILABILITY_OPTIONS.slice(0, 3).map((option) => (
-								<label key={option.value} className="flex items-center space-x-3 cursor-pointer">
+								<label
+									key={option.value}
+									className="flex items-center space-x-3 cursor-pointer"
+								>
 									<input
 										type="radio"
 										name="availability_status"
@@ -241,7 +259,10 @@ export default function AvailabilityWidget({
 							Timezone (Optional)
 						</label>
 						<div className="relative">
-							<GlobeAltIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+							<GlobeAltIcon
+								className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+								size={16}
+							/>
 							<select
 								value={timezone}
 								onChange={(e) => setTimezone(e.target.value)}
@@ -250,7 +271,7 @@ export default function AvailabilityWidget({
 								<option value="">Select timezone...</option>
 								{TIMEZONE_OPTIONS.map((tz) => (
 									<option key={tz} value={tz}>
-										{tz.replace('_', ' ')}
+										{tz.replace("_", " ")}
 									</option>
 								))}
 							</select>
@@ -265,21 +286,39 @@ export default function AvailabilityWidget({
 							</label>
 							<div className="grid grid-cols-2 gap-3">
 								<div className="relative">
-									<DollarSignIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+									<DollarSignIcon
+										className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+										size={16}
+									/>
 									<input
 										type="number"
 										value={salaryMin || ""}
-										onChange={(e) => setSalaryMin(e.target.value ? parseInt(e.target.value) : null)}
+										onChange={(e) =>
+											setSalaryMin(
+												e.target.value
+													? parseInt(e.target.value)
+													: null
+											)
+										}
 										className="input-primary pl-10"
 										placeholder="Min"
 									/>
 								</div>
 								<div className="relative">
-									<DollarSignIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+									<DollarSignIcon
+										className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+										size={16}
+									/>
 									<input
 										type="number"
 										value={salaryMax || ""}
-										onChange={(e) => setSalaryMax(e.target.value ? parseInt(e.target.value) : null)}
+										onChange={(e) =>
+											setSalaryMax(
+												e.target.value
+													? parseInt(e.target.value)
+													: null
+											)
+										}
 										className="input-primary pl-10"
 										placeholder="Max"
 									/>
@@ -326,11 +365,19 @@ export default function AvailabilityWidget({
 			) : (
 				<div className="space-y-3">
 					{/* Current Status Display */}
-					<div className={`inline-flex items-center space-x-2 px-3 py-2 rounded-lg border ${getCurrentOption().color}`}>
+					<div
+						className={`inline-flex items-center space-x-2 px-3 py-2 rounded-lg border ${
+							getCurrentOption().color
+						}`}
+					>
 						<span className="text-sm">{getCurrentOption().icon}</span>
 						<div>
-							<div className="font-medium text-sm">{getCurrentOption().label}</div>
-							<div className="text-xs opacity-75">{getCurrentOption().description}</div>
+							<div className="font-medium text-sm">
+								{getCurrentOption().label}
+							</div>
+							<div className="text-xs opacity-75">
+								{getCurrentOption().description}
+							</div>
 						</div>
 					</div>
 
@@ -339,10 +386,10 @@ export default function AvailabilityWidget({
 						{timezone && (
 							<div className="flex items-center space-x-2">
 								<GlobeAltIcon size={14} />
-								<span>{timezone.replace('_', ' ')}</span>
+								<span>{timezone.replace("_", " ")}</span>
 							</div>
 						)}
-						
+
 						{lastUpdated && (
 							<div className="flex items-center space-x-2">
 								<ClockIcon size={14} />
