@@ -1,14 +1,13 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React, { useState } from "react";
-import { 
-	SparklesIcon, 
-	ExternalLinkIcon, 
-	EyeIcon, 
+import {
+	SparklesIcon,
+	ExternalLinkIcon,
 	ShareIcon,
 	CheckIcon,
-	ClockIcon,
-	TrendingUpIcon
+	TrendingUpIcon,
 } from "./icons";
 
 interface JobAd {
@@ -27,20 +26,58 @@ interface JobAdComposerProps {
 }
 
 const JOB_BOARDS = [
-	{ key: "remote_ok", name: "Remote OK", icon: "🌍", color: "bg-green-100 text-green-800" },
-	{ key: "linkedin", name: "LinkedIn", icon: "💼", color: "bg-blue-100 text-blue-800" },
-	{ key: "hacker_news", name: "Hacker News", icon: "🔶", color: "bg-orange-100 text-orange-800" },
-	{ key: "angel_list", name: "AngelList", icon: "👼", color: "bg-purple-100 text-purple-800" },
+	{
+		key: "remote_ok",
+		name: "Remote OK",
+		icon: "🌍",
+		color: "bg-green-100 text-green-800",
+	},
+	{
+		key: "linkedin",
+		name: "LinkedIn",
+		icon: "💼",
+		color: "bg-blue-100 text-blue-800",
+	},
+	{
+		key: "hacker_news",
+		name: "Hacker News",
+		icon: "🔶",
+		color: "bg-orange-100 text-orange-800",
+	},
+	{
+		key: "angel_list",
+		name: "AngelList",
+		icon: "👼",
+		color: "bg-purple-100 text-purple-800",
+	},
 ];
 
 const TONE_OPTIONS = [
-	{ value: "professional", label: "Professional", description: "Formal and corporate tone" },
-	{ value: "casual", label: "Casual", description: "Friendly and approachable" },
-	{ value: "enthusiastic", label: "Enthusiastic", description: "Energetic and exciting" },
+	{
+		value: "professional",
+		label: "Professional",
+		description: "Formal and corporate tone",
+	},
+	{
+		value: "casual",
+		label: "Casual",
+		description: "Friendly and approachable",
+	},
+	{
+		value: "enthusiastic",
+		label: "Enthusiastic",
+		description: "Energetic and exciting",
+	},
 ];
 
-export default function JobAdComposer({ jobId, jobTitle, onPublished }: JobAdComposerProps) {
-	const [selectedBoards, setSelectedBoards] = useState<string[]>(["remote_ok"]);
+export default function JobAdComposer({
+	jobId,
+	jobTitle,
+	onPublished,
+}: JobAdComposerProps) {
+	const [selectedBoards, setSelectedBoards] = useState<string[]>([
+		"remote_ok",
+	]);
 	const [tone, setTone] = useState("professional");
 	const [includeDEI, setIncludeDEI] = useState(true);
 	const [customPrompt, setCustomPrompt] = useState("");
@@ -51,9 +88,9 @@ export default function JobAdComposer({ jobId, jobTitle, onPublished }: JobAdCom
 	const [error, setError] = useState<string | null>(null);
 
 	const handleBoardToggle = (boardKey: string) => {
-		setSelectedBoards(prev => 
-			prev.includes(boardKey) 
-				? prev.filter(b => b !== boardKey)
+		setSelectedBoards((prev) =>
+			prev.includes(boardKey)
+				? prev.filter((b) => b !== boardKey)
 				: [...prev, boardKey]
 		);
 	};
@@ -142,9 +179,12 @@ export default function JobAdComposer({ jobId, jobTitle, onPublished }: JobAdCom
 							<SparklesIcon className="text-white" size={20} />
 						</div>
 						<div>
-							<h2 className="text-xl font-bold text-gray-900">Smart Job Ad Composer</h2>
+							<h2 className="text-xl font-bold text-gray-900">
+								Smart Job Ad Composer
+							</h2>
 							<p className="text-sm text-gray-600">
-								AI-powered job ads for: <span className="font-medium">{jobTitle}</span>
+								AI-powered job ads for:{" "}
+								<span className="font-medium">{jobTitle}</span>
 							</p>
 						</div>
 					</div>
@@ -194,8 +234,12 @@ export default function JobAdComposer({ jobId, jobTitle, onPublished }: JobAdCom
 											: "border-gray-200 hover:border-gray-300"
 									}`}
 								>
-									<div className="font-medium text-gray-900">{option.label}</div>
-									<div className="text-sm text-gray-600">{option.description}</div>
+									<div className="font-medium text-gray-900">
+										{option.label}
+									</div>
+									<div className="text-sm text-gray-600">
+										{option.description}
+									</div>
 								</button>
 							))}
 						</div>
@@ -211,7 +255,10 @@ export default function JobAdComposer({ jobId, jobTitle, onPublished }: JobAdCom
 								onChange={(e) => setIncludeDEI(e.target.checked)}
 								className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
 							/>
-							<label htmlFor="includeDEI" className="text-sm font-medium text-gray-700">
+							<label
+								htmlFor="includeDEI"
+								className="text-sm font-medium text-gray-700"
+							>
 								Include diversity, equity & inclusion language
 							</label>
 						</div>
@@ -277,13 +324,16 @@ export default function JobAdComposer({ jobId, jobTitle, onPublished }: JobAdCom
 										Generated Job Ads
 									</h3>
 									<p className="text-sm text-gray-600">
-										{generatedAds.length} ads created for {selectedBoards.length} platforms
+										{generatedAds.length} ads created for{" "}
+										{selectedBoards.length} platforms
 									</p>
 								</div>
 								<div className="text-right">
 									<div className="flex items-center space-x-2 text-sm text-gray-600">
 										<TrendingUpIcon size={16} />
-										<span>Est. reach: {getTotalReach().toLocaleString()}</span>
+										<span>
+											Est. reach: {getTotalReach().toLocaleString()}
+										</span>
 									</div>
 								</div>
 							</div>
@@ -292,9 +342,11 @@ export default function JobAdComposer({ jobId, jobTitle, onPublished }: JobAdCom
 
 					{/* Individual Ads */}
 					{generatedAds.map((ad, index) => {
-						const board = JOB_BOARDS.find(b => b.key === ad.board);
-						const publishResult = publishResults.find(r => r.board === ad.board);
-						
+						const board = JOB_BOARDS.find((b) => b.key === ad.board);
+						const publishResult = publishResults.find(
+							(r) => r.board === ad.board
+						);
+
 						return (
 							<div key={index} className="card">
 								<div className="card-header">
@@ -302,25 +354,39 @@ export default function JobAdComposer({ jobId, jobTitle, onPublished }: JobAdCom
 										<div className="flex items-center space-x-3">
 											<span className="text-2xl">{board?.icon}</span>
 											<div>
-												<h4 className="font-semibold text-gray-900">{ad.boardName}</h4>
+												<h4 className="font-semibold text-gray-900">
+													{ad.boardName}
+												</h4>
 												<div className="flex items-center space-x-4 text-sm text-gray-600">
-													<span>Est. reach: {ad.estimatedReach.toLocaleString()}</span>
+													<span>
+														Est. reach:{" "}
+														{ad.estimatedReach.toLocaleString()}
+													</span>
 													<span>•</span>
-													<span>{ad.content.length} characters</span>
+													<span>
+														{ad.content.length} characters
+													</span>
 												</div>
 											</div>
 										</div>
 										{publishResult && (
-											<div className={`badge ${
-												publishResult.status === 'success' ? 'badge-success' : 'badge-error'
-											}`}>
-												{publishResult.status === 'success' ? (
+											<div
+												className={`badge ${
+													publishResult.status === "success"
+														? "badge-success"
+														: "badge-error"
+												}`}
+											>
+												{publishResult.status === "success" ? (
 													<>
-														<CheckIcon className="mr-1" size={12} />
+														<CheckIcon
+															className="mr-1"
+															size={12}
+														/>
 														Published
 													</>
 												) : (
-													'Failed'
+													"Failed"
 												)}
 											</div>
 										)}
@@ -333,7 +399,9 @@ export default function JobAdComposer({ jobId, jobTitle, onPublished }: JobAdCom
 										<label className="block text-xs font-medium text-gray-600 mb-1">
 											TITLE
 										</label>
-										<div className="font-semibold text-gray-900">{ad.title}</div>
+										<div className="font-semibold text-gray-900">
+											{ad.title}
+										</div>
 									</div>
 
 									{/* Content */}
@@ -353,7 +421,10 @@ export default function JobAdComposer({ jobId, jobTitle, onPublished }: JobAdCom
 										</label>
 										<div className="flex flex-wrap gap-1">
 											{ad.tags.map((tag, tagIndex) => (
-												<span key={tagIndex} className="badge badge-primary text-xs">
+												<span
+													key={tagIndex}
+													className="badge badge-primary text-xs"
+												>
 													{tag}
 												</span>
 											))}
@@ -361,22 +432,23 @@ export default function JobAdComposer({ jobId, jobTitle, onPublished }: JobAdCom
 									</div>
 
 									{/* Published URL */}
-									{publishResult?.status === 'success' && publishResult.url && (
-										<div>
-											<label className="block text-xs font-medium text-gray-600 mb-1">
-												PUBLISHED URL
-											</label>
-											<a
-												href={publishResult.url}
-												target="_blank"
-												rel="noopener noreferrer"
-												className="flex items-center space-x-2 text-blue-600 hover:text-blue-800 text-sm"
-											>
-												<ExternalLinkIcon size={14} />
-												<span>{publishResult.url}</span>
-											</a>
-										</div>
-									)}
+									{publishResult?.status === "success" &&
+										publishResult.url && (
+											<div>
+												<label className="block text-xs font-medium text-gray-600 mb-1">
+													PUBLISHED URL
+												</label>
+												<a
+													href={publishResult.url}
+													target="_blank"
+													rel="noopener noreferrer"
+													className="flex items-center space-x-2 text-blue-600 hover:text-blue-800 text-sm"
+												>
+													<ExternalLinkIcon size={14} />
+													<span>{publishResult.url}</span>
+												</a>
+											</div>
+										)}
 								</div>
 							</div>
 						);
@@ -388,9 +460,12 @@ export default function JobAdComposer({ jobId, jobTitle, onPublished }: JobAdCom
 							<div className="card-body">
 								<div className="flex items-center justify-between">
 									<div>
-										<h4 className="font-medium text-gray-900">Ready to publish?</h4>
+										<h4 className="font-medium text-gray-900">
+											Ready to publish?
+										</h4>
 										<p className="text-sm text-gray-600">
-											Your job ads will be posted to the selected platforms
+											Your job ads will be posted to the selected
+											platforms
 										</p>
 									</div>
 									<button
@@ -419,25 +494,44 @@ export default function JobAdComposer({ jobId, jobTitle, onPublished }: JobAdCom
 					{publishResults.length > 0 && (
 						<div className="card">
 							<div className="card-header">
-								<h4 className="font-semibold text-gray-900">Publishing Results</h4>
+								<h4 className="font-semibold text-gray-900">
+									Publishing Results
+								</h4>
 							</div>
 							<div className="card-body">
 								<div className="space-y-3">
 									{publishResults.map((result, index) => {
-										const board = JOB_BOARDS.find(b => b.key === result.board);
+										const board = JOB_BOARDS.find(
+											(b) => b.key === result.board
+										);
 										return (
-											<div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+											<div
+												key={index}
+												className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+											>
 												<div className="flex items-center space-x-3">
-													<span className="text-lg">{board?.icon}</span>
+													<span className="text-lg">
+														{board?.icon}
+													</span>
 													<div>
-														<div className="font-medium text-gray-900">{board?.name}</div>
-														<div className="text-sm text-gray-600">{result.message}</div>
+														<div className="font-medium text-gray-900">
+															{board?.name}
+														</div>
+														<div className="text-sm text-gray-600">
+															{result.message}
+														</div>
 													</div>
 												</div>
-												<div className={`badge ${
-													result.status === 'success' ? 'badge-success' : 'badge-error'
-												}`}>
-													{result.status === 'success' ? 'Success' : 'Failed'}
+												<div
+													className={`badge ${
+														result.status === "success"
+															? "badge-success"
+															: "badge-error"
+													}`}
+												>
+													{result.status === "success"
+														? "Success"
+														: "Failed"}
 												</div>
 											</div>
 										);

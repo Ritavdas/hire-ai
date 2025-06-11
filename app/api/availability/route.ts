@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db/client";
 import { resumes } from "@/db/schema";
@@ -10,49 +12,67 @@ export async function GET(request: NextRequest) {
 		const status = searchParams.get("status");
 		const freshOnly = searchParams.get("freshOnly") === "true";
 
-		let query = db.select({
-			id: resumes.id,
-			name: resumes.name,
-			location: resumes.location,
-			availability_status: resumes.availability_status,
-			availability_updated: resumes.availability_updated,
-			timezone: resumes.timezone,
-		}).from(resumes);
-
-		// Filter by specific resume
+		// Build where conditions array
+		const whereConditions = [];
 		if (resumeId) {
-			query = query.where(eq(resumes.id, resumeId));
+			whereConditions.push(eq(resumes.id, resumeId));
 		}
-
-		// Filter by availability status
 		if (status) {
-			query = query.where(eq(resumes.availability_status, status));
+			whereConditions.push(eq(resumes.availability_status, status));
 		}
-
-		// Filter for fresh status updates (within last 14 days)
 		if (freshOnly) {
-			const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
-			query = query.where(gte(resumes.availability_updated, fourteenDaysAgo));
+			const fourteenDaysAgo = new Date(
+				Date.now() - 14 * 24 * 60 * 60 * 1000
+			);
+			whereConditions.push(
+				gte(resumes.availability_updated, fourteenDaysAgo)
+			);
 		}
 
-		const results = await query;
+		// Build query with conditional where clause
+		const baseQuery = db
+			.select({
+				id: resumes.id,
+				name: resumes.name,
+				location: resumes.location,
+				availability_status: resumes.availability_status,
+				availability_updated: resumes.availability_updated,
+				timezone: resumes.timezone,
+			})
+			.from(resumes);
+
+		const results =
+			whereConditions.length > 0
+				? await baseQuery.where(and(...whereConditions))
+				: await baseQuery;
 
 		// Add engagement metrics
-		const enrichedResults = results.map(candidate => ({
+		const enrichedResults = results.map((candidate) => ({
 			...candidate,
 			statusAge: getStatusAge(candidate.availability_updated),
-			engagementLevel: getEngagementLevel(candidate.availability_status, candidate.availability_updated),
-			responseTimeEstimate: getResponseTimeEstimate(candidate.availability_status),
+			engagementLevel: getEngagementLevel(
+				candidate.availability_status || "unknown",
+				candidate.availability_updated
+			),
+			responseTimeEstimate: getResponseTimeEstimate(
+				candidate.availability_status || "unknown"
+			),
 		}));
 
 		return NextResponse.json({
 			candidates: enrichedResults,
 			summary: {
 				total: results.length,
-				actively_looking: results.filter(c => c.availability_status === "actively_looking").length,
-				open: results.filter(c => c.availability_status === "open").length,
-				not_looking: results.filter(c => c.availability_status === "not_looking").length,
-				unknown: results.filter(c => c.availability_status === "unknown").length,
+				actively_looking: results.filter(
+					(c) => c.availability_status === "actively_looking"
+				).length,
+				open: results.filter((c) => c.availability_status === "open")
+					.length,
+				not_looking: results.filter(
+					(c) => c.availability_status === "not_looking"
+				).length,
+				unknown: results.filter((c) => c.availability_status === "unknown")
+					.length,
 			},
 		});
 	} catch (error) {
@@ -67,14 +87,14 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
 	try {
 		const body = await request.json();
-		const { 
-			resumeId, 
-			availability_status, 
-			timezone, 
+		const {
+			resumeId,
+			availability_status,
+			timezone,
 			preferred_interview_times,
 			notice_period_weeks,
 			preferred_salary_min,
-			preferred_salary_max 
+			preferred_salary_max,
 		} = body;
 
 		if (!resumeId || !availability_status) {
@@ -85,7 +105,12 @@ export async function PUT(request: NextRequest) {
 		}
 
 		// Validate availability status
-		const validStatuses = ["actively_looking", "open", "not_looking", "unknown"];
+		const validStatuses = [
+			"actively_looking",
+			"open",
+			"not_looking",
+			"unknown",
+		];
 		if (!validStatuses.includes(availability_status)) {
 			return NextResponse.json(
 				{ error: "Invalid availability status" },
@@ -100,8 +125,10 @@ export async function PUT(request: NextRequest) {
 		};
 
 		if (timezone) updateData.timezone = timezone;
-		if (preferred_salary_min !== undefined) updateData.preferred_salary_min = preferred_salary_min;
-		if (preferred_salary_max !== undefined) updateData.preferred_salary_max = preferred_salary_max;
+		if (preferred_salary_min !== undefined)
+			updateData.preferred_salary_min = preferred_salary_min;
+		if (preferred_salary_max !== undefined)
+			updateData.preferred_salary_max = preferred_salary_max;
 
 		const updatedCandidate = await db
 			.update(resumes)
@@ -141,7 +168,7 @@ export async function POST(request: NextRequest) {
 		if (action === "decay_stale_status") {
 			// Auto-decay stale availability statuses
 			const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-			
+
 			const decayedCandidates = await db
 				.update(resumes)
 				.set({
@@ -164,7 +191,7 @@ export async function POST(request: NextRequest) {
 
 		if (action === "bulk_update") {
 			const { updates } = body;
-			
+
 			if (!Array.isArray(updates)) {
 				return NextResponse.json(
 					{ error: "Updates must be an array" },
@@ -184,16 +211,25 @@ export async function POST(request: NextRequest) {
 							})
 							.where(eq(resumes.id, update.resumeId))
 							.returning();
-						
-						return { success: true, resumeId: update.resumeId, result: result[0] };
+
+						return {
+							success: true,
+							resumeId: update.resumeId,
+							result: result[0],
+						};
 					} catch (error) {
-						return { success: false, resumeId: update.resumeId, error: error.message };
+						return {
+							success: false,
+							resumeId: update.resumeId,
+							error:
+								error instanceof Error ? error.message : String(error),
+						};
 					}
 				})
 			);
 
-			const successful = results.filter(r => r.success);
-			const failed = results.filter(r => !r.success);
+			const successful = results.filter((r) => r.success);
+			const failed = results.filter((r) => !r.success);
 
 			return NextResponse.json({
 				message: `Bulk update completed: ${successful.length} successful, ${failed.length} failed`,
@@ -202,10 +238,7 @@ export async function POST(request: NextRequest) {
 			});
 		}
 
-		return NextResponse.json(
-			{ error: "Invalid action" },
-			{ status: 400 }
-		);
+		return NextResponse.json({ error: "Invalid action" }, { status: 400 });
 	} catch (error) {
 		console.error("Error in availability batch operation:", error);
 		return NextResponse.json(
@@ -218,11 +251,11 @@ export async function POST(request: NextRequest) {
 // Helper functions
 function getStatusAge(updatedAt: Date | null): string {
 	if (!updatedAt) return "Unknown";
-	
+
 	const now = new Date();
 	const diffTime = now.getTime() - new Date(updatedAt).getTime();
 	const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-	
+
 	if (diffDays === 0) return "Today";
 	if (diffDays === 1) return "Yesterday";
 	if (diffDays < 7) return `${diffDays} days ago`;
@@ -231,13 +264,17 @@ function getStatusAge(updatedAt: Date | null): string {
 	return `${Math.floor(diffDays / 365)} years ago`;
 }
 
-function getEngagementLevel(status: string, updatedAt: Date | null): "high" | "medium" | "low" | "unknown" {
+function getEngagementLevel(
+	status: string,
+	updatedAt: Date | null
+): "high" | "medium" | "low" | "unknown" {
 	if (!updatedAt) return "unknown";
-	
+
 	const daysSinceUpdate = Math.floor(
-		(new Date().getTime() - new Date(updatedAt).getTime()) / (1000 * 60 * 60 * 24)
+		(new Date().getTime() - new Date(updatedAt).getTime()) /
+			(1000 * 60 * 60 * 24)
 	);
-	
+
 	switch (status) {
 		case "actively_looking":
 			if (daysSinceUpdate <= 7) return "high";

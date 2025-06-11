@@ -2,15 +2,15 @@
 
 import React, { useState, useEffect } from "react";
 import FitScoreBreakdown from "./FitScoreBreakdown";
-import { 
-	StarIcon, 
-	UserIcon, 
-	LocationIcon, 
-	EyeIcon, 
-	ThumbsUpIcon, 
+import {
+	StarIcon,
+	UserIcon,
+	LocationIcon,
+	EyeIcon,
+	ThumbsUpIcon,
 	ThumbsDownIcon,
 	AdjustmentsIcon,
-	ClockIcon
+	ClockIcon,
 } from "./icons";
 
 interface ScoringWeights {
@@ -19,6 +19,13 @@ interface ScoringWeights {
 	timezone: number;
 	availability: number;
 	salary: number;
+}
+
+interface ScoreComponent {
+	score: number;
+	weight: number;
+	contribution: number;
+	details: string;
 }
 
 interface ShortlistCandidate {
@@ -31,7 +38,13 @@ interface ShortlistCandidate {
 	timezone_score: number;
 	availability_score: number;
 	salary_score: number;
-	explanation: any;
+	explanation: {
+		skill_match: ScoreComponent;
+		experience: ScoreComponent;
+		timezone: ScoreComponent;
+		availability: ScoreComponent;
+		salary: ScoreComponent;
+	};
 	pdfUrl?: string;
 	availability_status: string;
 	skills: string[];
@@ -52,17 +65,19 @@ const DEFAULT_WEIGHTS: ScoringWeights = {
 	salary: 0.1,
 };
 
-export default function ShortlistDashboard({ 
-	jobId, 
-	jobTitle, 
-	onCandidateSelect 
+export default function ShortlistDashboard({
+	jobId,
+	jobTitle,
+	onCandidateSelect,
 }: ShortlistDashboardProps) {
 	const [candidates, setCandidates] = useState<ShortlistCandidate[]>([]);
 	const [weights, setWeights] = useState<ScoringWeights>(DEFAULT_WEIGHTS);
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [showWeightControls, setShowWeightControls] = useState(false);
-	const [selectedCandidate, setSelectedCandidate] = useState<string | null>(null);
+	const [selectedCandidate, setSelectedCandidate] = useState<string | null>(
+		null
+	);
 
 	const generateShortlist = async () => {
 		setIsLoading(true);
@@ -101,14 +116,20 @@ export default function ShortlistDashboard({
 		}
 	}, [jobId]);
 
-	const handleWeightChange = (category: keyof ScoringWeights, value: number) => {
-		setWeights(prev => ({
+	const handleWeightChange = (
+		category: keyof ScoringWeights,
+		value: number
+	) => {
+		setWeights((prev) => ({
 			...prev,
 			[category]: value,
 		}));
 	};
 
-	const handleFeedback = async (candidateId: string, feedbackType: 'thumbs_up' | 'thumbs_down') => {
+	const handleFeedback = async (
+		candidateId: string,
+		feedbackType: "thumbs_up" | "thumbs_down"
+	) => {
 		try {
 			await fetch("/api/feedback", {
 				method: "POST",
@@ -122,7 +143,7 @@ export default function ShortlistDashboard({
 					recruiterId: "current_user", // TODO: Replace with actual user ID
 				}),
 			});
-			
+
 			// Optionally refresh shortlist based on feedback
 		} catch (err) {
 			console.error("Error submitting feedback:", err);
@@ -162,14 +183,19 @@ export default function ShortlistDashboard({
 				<div className="card-header">
 					<div className="flex items-center justify-between">
 						<div>
-							<h2 className="text-xl font-bold text-gray-900">AI-Powered Shortlist</h2>
+							<h2 className="text-xl font-bold text-gray-900">
+								AI-Powered Shortlist
+							</h2>
 							<p className="text-sm text-gray-600">
-								Top candidates for: <span className="font-medium">{jobTitle}</span>
+								Top candidates for:{" "}
+								<span className="font-medium">{jobTitle}</span>
 							</p>
 						</div>
 						<div className="flex items-center space-x-3">
 							<button
-								onClick={() => setShowWeightControls(!showWeightControls)}
+								onClick={() =>
+									setShowWeightControls(!showWeightControls)
+								}
 								className="btn-secondary"
 							>
 								<AdjustmentsIcon className="mr-2" size={16} />
@@ -199,12 +225,15 @@ export default function ShortlistDashboard({
 				{/* Weight Controls */}
 				{showWeightControls && (
 					<div className="card-body border-t border-gray-200">
-						<h3 className="text-sm font-semibold text-gray-700 mb-4">Scoring Weights</h3>
+						<h3 className="text-sm font-semibold text-gray-700 mb-4">
+							Scoring Weights
+						</h3>
 						<div className="grid grid-cols-1 md:grid-cols-5 gap-4">
 							{Object.entries(weights).map(([category, weight]) => (
 								<div key={category}>
 									<label className="block text-xs font-medium text-gray-600 mb-2 capitalize">
-										{category.replace('_', ' ')} ({Math.round(weight * 100)}%)
+										{category.replace("_", " ")} (
+										{Math.round(weight * 100)}%)
 									</label>
 									<input
 										type="range"
@@ -212,7 +241,12 @@ export default function ShortlistDashboard({
 										max="1"
 										step="0.05"
 										value={weight}
-										onChange={(e) => handleWeightChange(category as keyof ScoringWeights, parseFloat(e.target.value))}
+										onChange={(e) =>
+											handleWeightChange(
+												category as keyof ScoringWeights,
+												parseFloat(e.target.value)
+											)
+										}
 										className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
 									/>
 								</div>
@@ -235,7 +269,9 @@ export default function ShortlistDashboard({
 			{isLoading && (
 				<div className="flex items-center justify-center py-12">
 					<div className="loading-spinner mr-3"></div>
-					<span className="text-gray-600">Analyzing candidates and generating shortlist...</span>
+					<span className="text-gray-600">
+						Analyzing candidates and generating shortlist...
+					</span>
 				</div>
 			)}
 
@@ -265,7 +301,10 @@ export default function ShortlistDashboard({
 					</div>
 
 					{candidates.map((candidate, index) => (
-						<div key={candidate.id} className="card hover:shadow-lg transition-all duration-200">
+						<div
+							key={candidate.id}
+							className="card hover:shadow-lg transition-all duration-200"
+						>
 							<div className="card-body">
 								<div className="flex items-start justify-between">
 									<div className="flex items-start space-x-4 flex-1">
@@ -283,16 +322,26 @@ export default function ShortlistDashboard({
 													</h4>
 													{candidate.location && (
 														<div className="flex items-center text-gray-600 text-sm mb-2">
-															<LocationIcon className="mr-1.5" size={14} />
+															<LocationIcon
+																className="mr-1.5"
+																size={14}
+															/>
 															{candidate.location}
 														</div>
 													)}
 													<div className="flex items-center space-x-3">
-														<span className={`badge ${getAvailabilityColor(candidate.availability_status)}`}>
-															{getAvailabilityText(candidate.availability_status)}
+														<span
+															className={`badge ${getAvailabilityColor(
+																candidate.availability_status
+															)}`}
+														>
+															{getAvailabilityText(
+																candidate.availability_status
+															)}
 														</span>
 														<span className="text-sm text-gray-600">
-															{candidate.experience_years} years experience
+															{candidate.experience_years} years
+															experience
 														</span>
 													</div>
 												</div>
@@ -300,41 +349,62 @@ export default function ShortlistDashboard({
 												{/* Fit Score */}
 												<div className="text-right">
 													<div className="flex items-center space-x-2 mb-2">
-														<StarIcon className="text-yellow-500" size={16} />
+														<StarIcon
+															className="text-yellow-500"
+															size={16}
+														/>
 														<span className="text-2xl font-bold text-blue-600">
 															{candidate.fit_score}%
 														</span>
 													</div>
-													<div className="text-xs text-gray-500">Fit Score</div>
+													<div className="text-xs text-gray-500">
+														Fit Score
+													</div>
 												</div>
 											</div>
 
 											{/* Skills */}
-											{candidate.skills && candidate.skills.length > 0 && (
-												<div className="mb-4">
-													<div className="text-xs font-medium text-gray-600 mb-2">KEY SKILLS</div>
-													<div className="flex flex-wrap gap-1">
-														{candidate.skills.slice(0, 6).map((skill, skillIndex) => (
-															<span key={skillIndex} className="badge badge-primary text-xs">
-																{skill}
-															</span>
-														))}
-														{candidate.skills.length > 6 && (
-															<span className="badge bg-gray-100 text-gray-600 text-xs">
-																+{candidate.skills.length - 6} more
-															</span>
-														)}
+											{candidate.skills &&
+												candidate.skills.length > 0 && (
+													<div className="mb-4">
+														<div className="text-xs font-medium text-gray-600 mb-2">
+															KEY SKILLS
+														</div>
+														<div className="flex flex-wrap gap-1">
+															{candidate.skills
+																.slice(0, 6)
+																.map((skill, skillIndex) => (
+																	<span
+																		key={skillIndex}
+																		className="badge badge-primary text-xs"
+																	>
+																		{skill}
+																	</span>
+																))}
+															{candidate.skills.length > 6 && (
+																<span className="badge bg-gray-100 text-gray-600 text-xs">
+																	+
+																	{candidate.skills.length - 6}{" "}
+																	more
+																</span>
+															)}
+														</div>
 													</div>
-												</div>
-											)}
+												)}
 
 											{/* Score Breakdown */}
 											<FitScoreBreakdown
 												candidate={candidate}
-												isExpanded={selectedCandidate === candidate.id}
-												onToggle={() => setSelectedCandidate(
-													selectedCandidate === candidate.id ? null : candidate.id
-												)}
+												isExpanded={
+													selectedCandidate === candidate.id
+												}
+												onToggle={() =>
+													setSelectedCandidate(
+														selectedCandidate === candidate.id
+															? null
+															: candidate.id
+													)
+												}
 											/>
 										</div>
 									</div>
@@ -344,13 +414,17 @@ export default function ShortlistDashboard({
 								<div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200">
 									<div className="flex items-center space-x-2">
 										<button
-											onClick={() => handleFeedback(candidate.id, 'thumbs_up')}
+											onClick={() =>
+												handleFeedback(candidate.id, "thumbs_up")
+											}
 											className="btn-ghost text-green-600 hover:bg-green-50"
 										>
 											<ThumbsUpIcon size={16} />
 										</button>
 										<button
-											onClick={() => handleFeedback(candidate.id, 'thumbs_down')}
+											onClick={() =>
+												handleFeedback(candidate.id, "thumbs_down")
+											}
 											className="btn-ghost text-red-600 hover:bg-red-50"
 										>
 											<ThumbsDownIcon size={16} />
@@ -360,7 +434,9 @@ export default function ShortlistDashboard({
 									<div className="flex items-center space-x-3">
 										{candidate.pdfUrl && (
 											<button
-												onClick={() => onCandidateSelect?.(candidate)}
+												onClick={() =>
+													onCandidateSelect?.(candidate)
+												}
 												className="btn-secondary"
 											>
 												<EyeIcon className="mr-2" size={16} />
@@ -388,12 +464,10 @@ export default function ShortlistDashboard({
 							No shortlist generated yet
 						</h3>
 						<p className="text-gray-600 mb-4">
-							Click "Generate Shortlist" to find the best candidates for this job.
+							Click &quot;Generate Shortlist&quot; to find the best
+							candidates for this job.
 						</p>
-						<button
-							onClick={generateShortlist}
-							className="btn-primary"
-						>
+						<button onClick={generateShortlist} className="btn-primary">
 							<StarIcon className="mr-2" size={16} />
 							Generate Shortlist
 						</button>

@@ -1,23 +1,24 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import { useState, useEffect } from "react";
 import JobCreator from "../components/JobCreator";
 import ShortlistDashboard from "../components/ShortlistDashboard";
 import JobAdComposer from "../components/JobAdComposer";
-import { 
-	BriefcaseIcon, 
-	PlusIcon, 
+import {
+	BriefcaseIcon,
+	PlusIcon,
 	SparklesIcon,
 	EyeIcon,
 	ShareIcon,
-	UsersIcon
+	UsersIcon,
 } from "../components/icons";
 
 type Job = {
 	id: string;
 	title: string;
 	description: string;
-	requirements: any;
+	requirements: string;
 	location: string | null;
 	remote_friendly: boolean;
 	salary_min: number | null;
@@ -34,7 +35,9 @@ type Job = {
 export default function JobsPage() {
 	const [jobs, setJobs] = useState<Job[]>([]);
 	const [selectedJob, setSelectedJob] = useState<Job | null>(null);
-	const [activeTab, setActiveTab] = useState<"overview" | "shortlist" | "ads">("overview");
+	const [activeTab, setActiveTab] = useState<"overview" | "shortlist" | "ads">(
+		"overview"
+	);
 	const [showJobCreator, setShowJobCreator] = useState(false);
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
@@ -47,7 +50,7 @@ export default function JobsPage() {
 		try {
 			const response = await fetch("/api/jobs");
 			if (!response.ok) throw new Error("Failed to fetch jobs");
-			
+
 			const data = await response.json();
 			setJobs(data.jobs);
 		} catch (err) {
@@ -58,7 +61,7 @@ export default function JobsPage() {
 	};
 
 	const handleJobCreated = (newJob: Job) => {
-		setJobs(prev => [newJob, ...prev]);
+		setJobs((prev) => [newJob, ...prev]);
 		setShowJobCreator(false);
 		setSelectedJob(newJob);
 		setActiveTab("shortlist");
@@ -73,10 +76,14 @@ export default function JobsPage() {
 
 	const getStatusColor = (status: string) => {
 		switch (status) {
-			case "active": return "bg-green-100 text-green-800";
-			case "paused": return "bg-yellow-100 text-yellow-800";
-			case "closed": return "bg-gray-100 text-gray-800";
-			default: return "bg-blue-100 text-blue-800";
+			case "active":
+				return "bg-green-100 text-green-800";
+			case "paused":
+				return "bg-yellow-100 text-yellow-800";
+			case "closed":
+				return "bg-gray-100 text-gray-800";
+			default:
+				return "bg-blue-100 text-blue-800";
 		}
 	};
 
@@ -146,28 +153,40 @@ export default function JobsPage() {
 					<div className="lg:col-span-1">
 						<div className="card">
 							<div className="card-header">
-								<h2 className="text-lg font-semibold text-gray-900">Active Jobs</h2>
-								<p className="text-sm text-gray-600">{jobs.length} total positions</p>
+								<h2 className="text-lg font-semibold text-gray-900">
+									Active Jobs
+								</h2>
+								<p className="text-sm text-gray-600">
+									{jobs.length} total positions
+								</p>
 							</div>
 							<div className="card-body p-0">
 								{isLoading ? (
 									<div className="flex items-center justify-center py-8">
 										<div className="loading-spinner mr-2"></div>
-										<span className="text-gray-600">Loading jobs...</span>
+										<span className="text-gray-600">
+											Loading jobs...
+										</span>
 									</div>
 								) : error ? (
 									<div className="p-6 text-center">
 										<div className="text-red-600 mb-2">Error</div>
-										<div className="text-sm text-gray-600">{error}</div>
+										<div className="text-sm text-gray-600">
+											{error}
+										</div>
 									</div>
 								) : jobs.length === 0 ? (
 									<div className="p-6 text-center">
-										<BriefcaseIcon className="mx-auto text-gray-400 mb-4" size={48} />
+										<BriefcaseIcon
+											className="mx-auto text-gray-400 mb-4"
+											size={48}
+										/>
 										<h3 className="text-lg font-medium text-gray-900 mb-2">
 											No jobs yet
 										</h3>
 										<p className="text-gray-600 mb-4">
-											Create your first job to start finding candidates
+											Create your first job to start finding
+											candidates
 										</p>
 										<button
 											onClick={() => setShowJobCreator(true)}
@@ -187,7 +206,9 @@ export default function JobsPage() {
 													setActiveTab("overview");
 												}}
 												className={`w-full text-left p-4 hover:bg-gray-50 transition-colors ${
-													selectedJob?.id === job.id ? "bg-blue-50 border-r-2 border-blue-500" : ""
+													selectedJob?.id === job.id
+														? "bg-blue-50 border-r-2 border-blue-500"
+														: ""
 												}`}
 											>
 												<div className="space-y-2">
@@ -195,17 +216,32 @@ export default function JobsPage() {
 														<h3 className="font-semibold text-gray-900 text-sm">
 															{job.title}
 														</h3>
-														<span className={`badge ${getStatusColor(job.status)} text-xs`}>
+														<span
+															className={`badge ${getStatusColor(
+																job.status
+															)} text-xs`}
+														>
 															{job.status}
 														</span>
 													</div>
 													<div className="text-xs text-gray-600">
-														{job.location || "Remote"} • {formatSalary(job.salary_min, job.salary_max)}
+														{job.location || "Remote"} •{" "}
+														{formatSalary(
+															job.salary_min,
+															job.salary_max
+														)}
 													</div>
 													<div className="flex items-center space-x-4 text-xs text-gray-500">
-														<span>{job.skills_required?.length || 0} required skills</span>
+														<span>
+															{job.skills_required?.length || 0}{" "}
+															required skills
+														</span>
 														<span>•</span>
-														<span>{new Date(job.created_at).toLocaleDateString()}</span>
+														<span>
+															{new Date(
+																job.created_at
+															).toLocaleDateString()}
+														</span>
 													</div>
 												</div>
 											</button>
@@ -229,11 +265,22 @@ export default function JobsPage() {
 													{selectedJob.title}
 												</h2>
 												<div className="flex items-center space-x-4 text-sm text-gray-600 mt-1">
-													<span>{selectedJob.location || "Remote"}</span>
+													<span>
+														{selectedJob.location || "Remote"}
+													</span>
 													<span>•</span>
-													<span>{formatSalary(selectedJob.salary_min, selectedJob.salary_max)}</span>
+													<span>
+														{formatSalary(
+															selectedJob.salary_min,
+															selectedJob.salary_max
+														)}
+													</span>
 													<span>•</span>
-													<span className={`badge ${getStatusColor(selectedJob.status)}`}>
+													<span
+														className={`badge ${getStatusColor(
+															selectedJob.status
+														)}`}
+													>
 														{selectedJob.status}
 													</span>
 												</div>
@@ -245,13 +292,28 @@ export default function JobsPage() {
 									<div className="border-b border-gray-200">
 										<nav className="flex space-x-8 px-6">
 											{[
-												{ key: "overview", label: "Overview", icon: EyeIcon },
-												{ key: "shortlist", label: "AI Shortlist", icon: SparklesIcon },
-												{ key: "ads", label: "Job Ads", icon: ShareIcon },
+												{
+													key: "overview",
+													label: "Overview",
+													icon: EyeIcon,
+												},
+												{
+													key: "shortlist",
+													label: "AI Shortlist",
+													icon: SparklesIcon,
+												},
+												{
+													key: "ads",
+													label: "Job Ads",
+													icon: ShareIcon,
+												},
 											].map((tab) => (
 												<button
 													key={tab.key}
-													onClick={() => setActiveTab(tab.key as any)}
+													onClick={() =>
+														// eslint-disable-next-line @typescript-eslint/no-explicit-any
+														setActiveTab(tab.key as any)
+													}
 													className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
 														activeTab === tab.key
 															? "border-blue-500 text-blue-600"
@@ -285,11 +347,20 @@ export default function JobsPage() {
 														Required Skills
 													</h4>
 													<div className="flex flex-wrap gap-2">
-														{selectedJob.skills_required?.map((skill, index) => (
-															<span key={index} className="badge badge-primary">
-																{skill}
+														{selectedJob.skills_required?.map(
+															(skill, index) => (
+																<span
+																	key={index}
+																	className="badge badge-primary"
+																>
+																	{skill}
+																</span>
+															)
+														) || (
+															<span className="text-gray-500">
+																None specified
 															</span>
-														)) || <span className="text-gray-500">None specified</span>}
+														)}
 													</div>
 												</div>
 
@@ -298,11 +369,20 @@ export default function JobsPage() {
 														Preferred Skills
 													</h4>
 													<div className="flex flex-wrap gap-2">
-														{selectedJob.skills_preferred?.map((skill, index) => (
-															<span key={index} className="badge badge-warning">
-																{skill}
+														{selectedJob.skills_preferred?.map(
+															(skill, index) => (
+																<span
+																	key={index}
+																	className="badge badge-warning"
+																>
+																	{skill}
+																</span>
+															)
+														) || (
+															<span className="text-gray-500">
+																None specified
 															</span>
-														)) || <span className="text-gray-500">None specified</span>}
+														)}
 													</div>
 												</div>
 											</div>
@@ -313,7 +393,9 @@ export default function JobsPage() {
 														Experience
 													</h4>
 													<p className="text-gray-600">
-														{selectedJob.experience_min || 0} - {selectedJob.experience_max || 10} years
+														{selectedJob.experience_min || 0} -{" "}
+														{selectedJob.experience_max || 10}{" "}
+														years
 													</p>
 												</div>
 												<div>
@@ -321,7 +403,9 @@ export default function JobsPage() {
 														Remote Work
 													</h4>
 													<p className="text-gray-600">
-														{selectedJob.remote_friendly ? "Remote-friendly" : "On-site only"}
+														{selectedJob.remote_friendly
+															? "Remote-friendly"
+															: "On-site only"}
 													</p>
 												</div>
 												<div>
@@ -329,7 +413,9 @@ export default function JobsPage() {
 														Created
 													</h4>
 													<p className="text-gray-600">
-														{new Date(selectedJob.created_at).toLocaleDateString()}
+														{new Date(
+															selectedJob.created_at
+														).toLocaleDateString()}
 													</p>
 												</div>
 											</div>
@@ -354,12 +440,16 @@ export default function JobsPage() {
 						) : (
 							<div className="card">
 								<div className="card-body text-center py-16">
-									<UsersIcon className="mx-auto text-gray-400 mb-4" size={64} />
+									<UsersIcon
+										className="mx-auto text-gray-400 mb-4"
+										size={64}
+									/>
 									<h3 className="text-xl font-medium text-gray-900 mb-2">
 										Select a job to get started
 									</h3>
 									<p className="text-gray-600 mb-6">
-										Choose a job from the list to view details, generate AI shortlists, and create job ads
+										Choose a job from the list to view details,
+										generate AI shortlists, and create job ads
 									</p>
 									{jobs.length === 0 && (
 										<button
